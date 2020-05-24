@@ -17,5 +17,8 @@ ENV PYTHONUNBUFFERED 1
 ADD requirements.txt /code/
 RUN pip install -r requirements.txt
 
+# copy(add) script
+COPY ./backend/scripts/start.sh /
+
 # copy(add) project
 ADD . /code/
