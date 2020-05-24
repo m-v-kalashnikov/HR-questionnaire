@@ -89,6 +89,7 @@ services:
 Таким образом у нас получается следующая структура файлов
 
 ```bash
+$ tree
 .
 ├── docker-compose.yml
 ├── Dockerfile
