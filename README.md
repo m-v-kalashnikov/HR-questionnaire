@@ -2,7 +2,7 @@
 
 Выпускной проект по курсу SkillFactory
 
-##Вступление
+## Вступление
 
 Этот README.md будет больше похож на туториал о том как запускать связку django-vue-gunicorn-nginx
 
@@ -15,7 +15,7 @@
  - [Здесь](https://testdriven.io/blog/dockerizing-django-with-postgres-gunicorn-and-nginx/) мне нравится настройка cтатики, медиа и то как реализован докерфайл
  - [Здесь](https://gitlab.com/briancaffey/docker-nginx-django-vue-architecture/-/blob/master/documentation/README.md) мне нравится методология и стиль разработки, а также структурированость
 
-##Git
+## Git
 
 Сразу скажу что я буду пытаться придерживаться правильному бенчингу с гитом. В оигинальном туториале ссылка на [эту](https://nvie.com/posts/a-successful-git-branching-model/) статью. 
 
