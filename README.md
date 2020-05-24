@@ -1,7 +1,5 @@
 # HR-questionnaire
 
-Выпускной проект по курсу SkillFactory
-
 ## Вступление
 
 Этот README.md будет больше похож на туториал о том как запускать связку django-vue-gunicorn-nginx
@@ -90,7 +88,7 @@ services:
 
 Таким образом у нас получается следующая структура файлов
 
-```
+```bash
 .
 ├── docker-compose.yml
 ├── Dockerfile
