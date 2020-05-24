@@ -109,7 +109,8 @@ sudo docker-compose run web django-admin.py startproject backend
 
 Также давайте сверим что у нас получилось используя команду `tree` (если она у вас не установлена то сначала запустите `sudo apt  install tree`)
 
-```
+```bash
+$ tree
 .
 ├── backend
 │   ├── backend
@@ -126,7 +127,6 @@ sudo docker-compose run web django-admin.py startproject backend
 └── requirements.txt
 
 2 directories, 11 files
-
 ```
 
 А также давайте посмотрим на список файлов в нашей верхнеуровневой директории.
@@ -198,11 +198,12 @@ $ git status
 $ git add . && git commit -m "created django project and docker files, updated README"
 ```
 
-###Переменные окружения
+### Переменные окружения
 
 Дальше чтобы внесем несколько правок в settings.py и добавим файлы переменных окружения.
 
 Для начала обновим переменные `SECRET_KEY`, `DEBUG`, `ALLOWED_HOSTS` и `DATABASES` переменные в settings.py:
+
 ```python
 SECRET_KEY = os.environ.get("SECRET_KEY")
 
@@ -255,6 +256,7 @@ services:
 ```
 
 **.env.dev**
+
 ```.env
 DEBUG=1
 SECRET_KEY=foo
@@ -268,6 +270,7 @@ SQL_PORT=5432
 ```
 
 **.env.dev.db**
+
 ```.env
 POSTGRES_USER=michael
 POSTGRES_PASSWORD=sezam_unlock
@@ -308,6 +311,7 @@ command: /start.sh
 ```
 
 **Dockerfile**
+
 ```Dockerfile
 # pull official base image
 FROM python:3.8.3-alpine
@@ -381,7 +385,9 @@ $ sudo chmod +x backend/backend/scripts/start.sh
 ```
 
 На данном этапе у нас должна быть следующая структура файлов:
-```
+
+```bash
+$ tree
 .
 ├── backend
 │   ├── backend
@@ -422,9 +428,7 @@ djangorestframework-jwt==1.11.0
 Затем нам нужно добавить следующее в `INSTALLED_APPS`:
 
 ```python
-
     'rest_framework',
-
 ```
 
 Затем мы можем добавить следующее в `settings.py` после` DATABASES`:
