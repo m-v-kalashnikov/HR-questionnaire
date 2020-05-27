@@ -356,6 +356,7 @@ then
 fi
 
 cd backend || exit
+python3 manage.py flush --no-input
 python3 manage.py makemigrations
 python3 manage.py migrate --no-input
 python3 manage.py runserver 0.0.0.0:8000
@@ -552,4 +553,262 @@ Destroying test database for alias 'default'...
 
 На этом моменте давайте сделаем паузу и закомиттим наш проект.
 
-# тут
+Теперь, когда у нас есть работающая система аутентификации пользователей, давайте создадим простую модель `Questionnaire` в новом приложении под названием `make_questionnaire`.
+
+Создайте приложение `make_questionnaire` в нашем проекте Django с помощью `docker exec`, как мы делали раньше:
+ 
+```bash
+$ docker exec -it web-dev /bin/sh
+/code # cd backend
+/code/backend # python ./manage.py startapp make_questionnaire
+/code/backend # 
+```
+
+Сразу же поменяем права доступа:
+
+```bash
+$ sudo chown -R $USER:$USER .
+```
+
+Вместо простого добавления `make_questionnaire` в `INSTALLED_APPS` мы добавим `make_questionnaire.apps.MakeQuestionnaireConfig`, а так же в `make_questionnaire/apps` в `MakeQuestionnaireConfig` добавим строчку:
+
+```python
+    verbose_name = "Создание опроса"
+```
+
+Так у нас в админке это приложение будет отображаться с тем названием которое мы указали.
+
+Также в `settings.py` в переменной `LANGUAGE_CODE` поставим значение `'ru'` это сделает наше приложение 'заточеным' под русско-говорящих. И свяжите URL-адреса в `backend` с помощью:
+
+```python
+urlpatterns = [
+  ...
+  path('api/', include('make_questionnaire.urls', namespace="make_questionnaire_app")),
+]
+```
+
+Теперь таже сделаем довольно интересную штуку. Удалим файл `models.py` и вместо него добавим пакет `models` и вместо того чтобы прописывать все модели в одном файле мы для каждой модели будем делать свой файл, а в `__init__.py` будем импортировать эти модели. Тем самым все по использованию моделей останется таким же только файл с моделями не будет вмещать в себе кучу строк кода в которых легко потеряться.
+
+В этом пакете создадим файл `questionnaire_model` со следующим содержимым:
+
+```python
+import itertools
+from django.db import models
+from django.utils.text import slugify
+from googletrans import Translator
+
+
+class Questionnaire(models.Model):
+    title = models.CharField('название', max_length=128)
+    created_at = models.DateTimeField(auto_now_add=True, null=True)
+    updated_at = models.DateTimeField(auto_now=True, null=True)
+    slug = models.SlugField(default='',
+                            editable=False,
+                            max_length=256,
+                            )
+
+
+    class Meta:
+        verbose_name = 'Опросник'
+        verbose_name_plural = 'Опросники'
+
+    def __str__(self):
+        return self.title
+
+    def _generate_slug(self):
+        max_length = self._meta.get_field('slug').max_length
+        value = Translator().translate('{}'.format(self.title), dest='en').text
+        slug_candidate = slug_original = slugify(value, allow_unicode=True)
+        for i in itertools.count(1):
+            if not Questionnaire.objects.filter(slug=slug_candidate).exists():
+                break
+            slug_candidate = '{}-{}'.format(slug_original, i)
+
+        self.slug = slug_candidate
+
+    def save(self, *args, **kwargs):
+        if not self.pk:
+            self._generate_slug()
+
+        super().save(*args, **kwargs)
+```
+
+А в `__init__.py` добавим импорм толькочто созданой модели:
+
+```python
+from .questionnaire_model import Questionnaire
+```
+
+В моделе мы добавили только базовые поля которые будут использоваться в любом случае остачу полей будем добавлятьпо мере надобности. `created_at` и `updated_at` это служебные поля которые отвечают за отображение когда опрос был создан и обновлен, а `slug` будет хранить строку которая будет отображаться в адресной строке припопыке входа на детальный просмотр этого опроса.
+
+Также мы добавили функцию `_generate_slug` которую я поаимствовал [тут](https://simpleit.rocks/python/django/generating-slugs-automatically-in-django-easy-solid-approaches/#all-together). Единственное это мы добавили клиент для Google Translate указали чтобы значение поля `title` перед тем как слагифицировать переводилось на английский. Тем самым мы будем получать красивое значение в адресной строке.
+
+Добавим пакет для работы Google Translate в `requirements.txt`
+
+```requirements.txt
+...
+googletrans==2.4.0
+```
+
+Далее давайте зарегистрируем это приложение `admin.py`:
+
+```python
+from django.contrib import admin
+from .models import Questionnaire
+
+admin.site.register(Questionnaire)
+```
+
+Тут мы делаем покачто только отображение, но в дальнейшем мы скорее всего заменим это.
+
+Затем добавим сериализатор для этой модели, создав `serializers.py` в папке `make_questionnaire`:
+
+```python
+from rest_framework import serializers
+from .models import Questionnaire
+
+
+class QuestionnaireSerializer(serializers.HyperlinkedModelSerializer):
+    url = serializers.HyperlinkedIdentityField(
+        view_name='make_questionnaire_app:questionnaire-detail',
+        lookup_field='slug'
+    )
+    class Meta:
+        model = Questionnaire
+        fields = ['url', 'title', 'created_at', 'updated_at']
+```
+
+В сериализаторе мы использовали `HyperlinkedModelSerializer` который автоматически досоздает поле `url` которое отображает ссылку на этот обьект. Мы его только до настроим указав какой путь использовать в роутинге и поле которое будет использоваться для поиска.
+
+После чего добавим viewsets по которым будем делать отображение:
+
+```python
+from rest_framework import viewsets
+from .models import Questionnaire
+from .serializers import QuestionnaireSerializer
+
+
+class QuestionnaireViewSet(viewsets.ModelViewSet):
+    queryset = Questionnaire.objects.all()
+    serializer_class = QuestionnaireSerializer
+    lookup_field = 'slug'
+```
+
+И наконец-то в `urls.py` добавим роутинг:
+
+```python
+from rest_framework import routers
+from .views import QuestionnaireViewSet
+
+app_name = 'make_questionnaire_app'
+
+router = routers.DefaultRouter()
+router.register(r'questionnaire', QuestionnaireViewSet, basename='questionnaire')
+
+urlpatterns = router.urls
+```
+
+Теперь мы можем добавить опросники через админ-панель. Для удобства разработки поправим наш `start.sh` чтобы при старте контейнера сразу создавался и суперпользователь:
+
+```bash
+#!/bin/sh
+
+if [[ "$DATABASE" = "postgres" ]]
+then
+    echo "Waiting for postgres..."
+
+    while ! nc -z $SQL_HOST $SQL_PORT; do
+      sleep 0.1
+    done
+
+    echo "PostgreSQL started"
+fi
+
+cd backend || exit
+python3 manage.py flush --no-input
+python3 manage.py makemigrations
+python3 manage.py migrate --no-input
+echo "from django.contrib.auth.models import User; User.objects.create_superuser('admin', 'a@a.com', 'admin')" | python3 manage.py shell
+python3 manage.py runserver 0.0.0.0:8000
+```
+
+После добавления опросников давайте перейдем по адресу http://0.0.0.0:8000/api/questionnaire/ где вы должны увидеть опросники, созданные вами в админке. Теперь давайте посмотрим на кое-что. Ранее мы установили переменную `REST_FRAMEWORK` в `settings.py`. Давайте посмотрим, что она делает, удаляя сеанс и обычную аутентификацию:
+
+```python
+REST_FRAMEWORK = {
+    'DEFAULT_PERMISSION_CLASSES': (
+        'rest_framework.permissions.IsAuthenticated',
+    ),
+    'DEFAULT_AUTHENTICATION_CLASSES': (
+        'rest_framework_jwt.authentication.JSONWebTokenAuthentication',
+        # 'rest_framework.authentication.SessionAuthentication',
+        # 'rest_framework.authentication.BasicAuthentication',
+    ),
+}
+```
+
+После можно вернуть переменную к первозданной форме.
+
+Прежде чем мы начнем работать над нашим форнтендом, давайте напишем несколько тестов, чтобы убедиться, что доступ к нашим сообщениям ограничен запросами, которые приходят с действительным токеном.
+
+**make_questionnaire/tests.py**
+
+```python
+from django.contrib.auth.models import User
+from django.test import TestCase
+from django.urls import reverse
+
+from rest_framework import status
+
+from rest_framework_jwt.settings import api_settings
+
+
+class TestQuestionnaires(TestCase):
+    """Questionnaire Tests"""
+
+    def test_get_questionnaires(self):
+        """
+        Unauthenticated users should not be able to access questionnaires via APIListView
+        """
+        url = reverse('make_questionnaire_app:questionnaire-list')
+        resp = self.client.get(url)
+        self.assertEqual(resp.status_code, status.HTTP_401_UNAUTHORIZED)
+
+    def test_header_for_token_verification(self):
+        """
+        https://stackoverflow.com/questions/47576635/django-rest-framework-jwt-unit-test
+        Tests that users can access questionnaires with JWT tokens
+        """
+
+        jwt_payload_handler = api_settings.JWT_PAYLOAD_HANDLER
+        jwt_encode_handler = api_settings.JWT_ENCODE_HANDLER
+
+        user = User.objects.create_user(username='user', email='user@foo.com', password='pass')
+        user.is_active = True
+        user.save()
+        payload = jwt_payload_handler(user)
+        token = jwt_encode_handler(payload)
+
+
+        verify_url = reverse('api-jwt-verify')
+        credentials = {
+            'token': token
+        }
+
+        resp = self.client.post(verify_url, credentials, format='json')
+        self.assertEqual(resp.status_code, status.HTTP_200_OK)
+```
+
+Поскольку мы можем аутентифицироваться только с помощью веб-токенов JSON, нам следует подумать о добавлении нашего frontend-а. Это позволит нам отправлять POST-запросы к маршруту аутентификации бэкэнда из формы входа в frontend, сохранять возвращенные токены в локальном хранилище, а также отправлять токен в виде заголовка с каждым исходящим запросом, который можно использовать для предоставления разрешения для защищенных ресурсов. Мы скоро доберемся до этого, но сначала нам нужно добавить наш frontend.
+
+На данный момент, мы можем сказать, что самые основы нашего бэкэнд-приложения завершены. Мы можем получить токены для доступа к защищенным ресурсам. В настоящее время мы не можем ничего сделать с этими токенами, кроме как включить их в наши тесты. Давайте закоммитим наши изменения и сделаем merge из нашей ветки `djangoapp` в ветку `develop`.
+
+
+```bash
+$ git commit -m "added questionnaire model and tests for users accessing questionnaires"
+$ git checkout develop
+$ git merge djangoapp
+```
+
+# Frontend
+
