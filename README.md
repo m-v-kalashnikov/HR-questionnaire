@@ -813,3 +813,110 @@ $ git merge djangoapp
 
 # Frontend
 
+Теперь мы готовы построить наш frontend. Во-первых, давайте создадим ветвь функции под названием vueapp, которую мы разветвляем из нашей текущей ветки develop.
+
+```bash
+$ git checkout -b vueapp develop
+
+$ git lg2
+* 67cf4e8 - Wed, 27 May 2020 07:50:18 +0300 (11 часов назад) (HEAD -> vueapp, djangoapp, develop)
+|           added questionnaire model and tests for users accessing questionnaires - Michael Kalashnikov
+* e4e503e - Wed, 27 May 2020 07:48:15 +0300 (11 часов назад)
+|           added questionnaire model and tests for users accessing questionnaires - Michael Kalashnikov
+* 39047c9 - Wed, 27 May 2020 07:47:43 +0300 (11 часов назад)
+* 67cf4e8 - Wed, 27 May 2020 07:50:18 +0300 (11 часов назад) (HEAD -> vueapp, djangoapp, develop)
+|           added questionnaire model and tests for users accessing questionnaires - Michael Kalashnikov
+* e4e503e - Wed, 27 May 2020 07:48:15 +0300 (11 часов назад)
+|           added questionnaire model and tests for users accessing questionnaires - Michael Kalashnikov
+* 39047c9 - Wed, 27 May 2020 07:47:43 +0300 (11 часов назад)
+|           added questionnaire model and tests for users accessing questionnaires - Michael Kalashnikov
+* e7b9d11 - Sun, 24 May 2020 16:55:56 +0300 (3 дня назад) (origin/djangoapp)
+|           Adding DRF to project, updating README.md - m-v-kalashnikov
+* e19b440 - Sun, 24 May 2020 16:51:45 +0300 (3 дня назад)
+|           Adding DRF to project, updating README.md - m-v-kalashnikov
+* c34964a - Sun, 24 May 2020 16:46:44 +0300 (3 дня назад)
+|           Adding DRF to project, updating README.md - m-v-kalashnikov
+* 4d9fde1 - Sun, 24 May 2020 16:44:56 +0300 (3 дня назад)
+|           Adding DRF to project, updating README.md - m-v-kalashnikov
+* 626c140 - Sun, 24 May 2020 16:41:38 +0300 (3 дня назад)
+|           Adding DRF to project, updating README.md - m-v-kalashnikov
+* 0106a0d - Sun, 24 May 2020 16:38:21 +0300 (3 дня назад)
+|           Adding DRF to project - m-v-kalashnikov
+* 8479c1f - Fri, 22 May 2020 06:39:47 +0300 (6 дней назад)
+|           created django project and docker files, updated README - m-v-kalashnikov
+* fd00a82 - Fri, 22 May 2020 06:38:54 +0300 (6 дней назад)
+|           created django project and docker files, updated README - m-v-kalashnikov
+* 58acc30 - Thu, 21 May 2020 21:38:12 +0300 (6 дней назад) (origin/master, origin/HEAD, master)
+|           Initial commit - m-v-kalashnikov
+* a126273 - Wed, 20 May 2020 19:39:10 +0300 (7 дней назад)
+            Initial commit - Kalashnikov Michael
+```
+
+Давайте создадим папку верхнего уровня под названием `frontend`, которая будет содержать наше приложение Vue. Вместо запуска `mkdir frontend`, мы хотим, чтобы эта папка и ее файлы были сгенерированы Docker. Нам для этого нужен контейнер с node.
+
+Давайте начнем с `Dockerfile` в нашей папке верхнего уровня. Этот файл будет иметь только одну строку:
+
+```Dockerfile
+FROM node:14.3.0-alpine
+```
+
+Далее мы запустим следующую команду (но естественно вы указываете свой путь к root дирекрорию):
+
+```bash
+$ docker run --rm -it -v /home/michael/PycharmProjects/HR-questionnaire/frontend/:/code node:14.3.0-alpine /bin/sh
+```
+
+Эта команда запустит контейнер с node и поделит нашу папку `frontend` с новой папкой, которую мы создаем в контейнере под названием `/code`. Как только мы окажемся внутри контейнера, мы можем установить следующие пакеты с помощью `npm` (который уже установлен, поскольку мы используем `node: 9.11.1-alpine` в качестве базового образа для этого контейнера):
+
+- vue
+- @vue/cli
+
+Внутри контейнера выполните следующие команды:
+
+```vue
+# cd code
+# npm i -g vue @vue/cli
+# vue create .
+```
+
+Это приведет нас в каталог `/code` (который используется совместно с `frontend` на нашей локальной машине - это, по сути, каталог).
+
+Затем мы устанавливаем пакеты с помощью npm глобально и запускаем команду для создания нового проекта VueJS с помощью командной строки. Вот настройки, которые я выберу для этого проекта:
+
+```vue
+Vue CLI v4.4.1
+? Please pick a preset: Manually select features
+? Check the features needed for your project: Babel, Router, Vuex, Linter
+? Use history mode for router? (Requires proper server setup for index fallback in production) Yes
+? Pick a linter / formatter config: Airbnb
+? Pick additional lint features: Lint on save, Lint and fix on commit (requires Git)
+? Where do you prefer placing config for Babel, ESLint, etc.? In package.json
+? Save this as a preset for future projects? (y/N) n
+```
+
+Теперь у нас есть новый проект VueJS на нашей локальной машине. Прежде чем что-то делать, мы должны изменить права доступа к файлам, которые были только что созданы, потому что они были созданы docker и, следовательно, принадлежат пользователю `root`.
+
+# ТУТ
+
+Теперь мы почти готовы начать разработку нашего приложения Vue. Но прежде чем мы это сделаем, нам нужно поговорить об окружающей среде.
+
+Приложение VueJS - это не что иное, как `коллекция статических файлов`. Однако при разработке нашего приложения VueJS мы будем работать с файлами `.vue`, которые используют преимущества современных функций Javascript (ES6). Когда мы запускаем `npm run build`, файлы `.vue` и другие файлы объединяются в `коллекцию статических файлов`, которые доставляются в браузер, поэтому они не включают в себя файлы `.vue`. Только файлы `html`, `.js` и `.css`.
+
+Мы хотим воспользоваться возможностью горячей перезагрузки. Это особенность современных сред Javascript, которая позволяет нам просматривать наше приложение по мере его разработки. Это означает, что мы можем вносить изменения в файлы `.vue`, и тогда мы сможем мгновенно увидеть изменения в браузере, который показывает нам предварительный просмотр. Этот «предварительный просмотр» начинается с запуска `npm run serve`. Это режим, который мы будем использовать при разработке нашего приложения. Он не использует `коллекцию статических файлов`, которую мы будем использовать в производстве.
+
+Так как docker - это поддержка одной и той же среды между разработкой, тестированием, подготовкой / QA и производством, мы должны быть осторожны, когда начинаем вводить разные среды. Было бы непрактично запускать `npm run build` после каждого изменения, внесенного нами при разработке нашего приложения - этой команде требуется некоторое время для генерации `коллекции статических файлов`.
+
+Это означает, что нам в конечном итоге потребуются две разные версии нашего существующего файла `docker-compose.yml`:
+
+1. Тот, который служит `коллекцией статических файлов` для производства.
+2. Тот, который предлагает нам горячую перезагрузку в процессе разработки.
+
+Мы также сможем использовать verion `1` во время локальной разработки, но наши изменения не будут отражены немедленно. Мы увидим все это в действии через минуту.
+
+Прежде чем мы разделим наш `docker-compose.yml`, давайте закоммитим наши изменения. Еще одна вещь, мы можем удалить Dockerfile, который мы использовали для создания нашего контейнера и для создания файлов и приложения Vue.
+
+```bash
+$ rm Dockerfile
+$ git add .
+$ git commit -m "added VueJS project in frontend"
+```
