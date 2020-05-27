@@ -805,6 +805,7 @@ class TestQuestionnaires(TestCase):
 
 
 ```bash
+$ git add .
 $ git commit -m "added questionnaire model and tests for users accessing questionnaires"
 $ git checkout develop
 $ git merge djangoapp
