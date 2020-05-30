@@ -896,8 +896,6 @@ Vue CLI v4.4.1
 
 Теперь у нас есть новый проект VueJS на нашей локальной машине. Прежде чем что-то делать, мы должны изменить права доступа к файлам, которые были только что созданы, потому что они были созданы docker и, следовательно, принадлежат пользователю `root`.
 
-# ТУТ
-
 Теперь мы почти готовы начать разработку нашего приложения Vue. Но прежде чем мы это сделаем, нам нужно поговорить об окружающей среде.
 
 Приложение VueJS - это не что иное, как `коллекция статических файлов`. Однако при разработке нашего приложения VueJS мы будем работать с файлами `.vue`, которые используют преимущества современных функций Javascript (ES6). Когда мы запускаем `npm run build`, файлы `.vue` и другие файлы объединяются в `коллекцию статических файлов`, которые доставляются в браузер, поэтому они не включают в себя файлы `.vue`. Только файлы `html`, `.js` и `.css`.
@@ -919,4 +917,580 @@ Vue CLI v4.4.1
 $ rm Dockerfile
 $ git add .
 $ git commit -m "added VueJS project in frontend"
+```
+
+## docker-compose.dev.yml
+
+Поскольку мы будем разбивать наш файл `docker-compose.yml` на версию для разработки и производства (и еще больше версий позже), давайте скопируем его в `docker-compose.dev.yml`:
+
+```bash
+$ cp docker-compose.yml docker-compose.dev.yml
+```
+
+Наш файл `docker-compose.dev.yml` в настоящее время содержит два сервиса:` db` и `web`. `db` - это сервис, который запускает нашу базу данных Postgres, а `web` - это сервис, который запускает наше приложение Django. Нам нужно будет ввести два новых сервиса: `frontend` и `nginx`. Кроме того, добавим одну или несколько [сетей](https://docs.docker.com/network/), которые помогут нашему сервису автоматически взаимодействовать через механизм докера.
+
+### Networks
+
+Существует несколько типов сетей, которые поддерживает Docker, но мы будем использовать одну из них, называемую «user-defined bridge networks».
+
+> user-defined bridge networks лучше всего подходят, когда вам нужно несколько контейнеров для связи на одном хосте Docker. Мы добавим их в `docker-compose.dev.yml` после того, как добавим сервисы `frontend` и `nginx`.
+
+### frontend
+
+`frontend` будет использовать базовый образ `node` и будет запускать `npm run serve`, чтобы мы могли отслеживать изменения файлов в нашем проекте и мгновенно видеть результат.
+
+Вот как сервис будет выглядеть в `docker-compose.dev.yml`:
+
+```yaml
+  frontend:
+    container_name: frontend-dev
+    build:
+      context: ./frontend
+    volumes:
+      - './frontend:/app/:ro'
+      - '/app/node_modules'
+    networks:
+      - django-nginx
+    depends_on:
+      - web
+    environment:
+      - NODE_ENV=development
+```
+
+Для этого сервиса мы будем искать `Dockerfile` в `frontend`. Мы знаем это из части `build/context` определения сервиса:
+
+```yaml
+    build:
+      context: ./frontend
+```
+
+Давайте создадим этот `Dockerfile`, а затем продолжим рассмотрение службы` frontend` в `docker-compose.dev.yml`.
+
+### frontend Dockerfile
+
+```Dockerfile
+FROM node:14.3.0-alpine
+
+# make the 'app' folder the current working directory
+WORKDIR /app
+
+# copy both 'package.json' and 'package-lock.json' (if available)
+COPY package*.json ./
+
+# install project dependencies
+RUN npm install
+
+# copy project files and folders to the current working directory (i.e. 'app' folder)
+COPY . .
+
+EXPOSE 8080
+
+CMD ["npm", "run", "serve"]
+```
+
+Этот Dockerfile говорит:
+
+- Используйте `node:14.3.0-alpine`,
+- В контейнере создайте папку в корне файловой системы с именем `/app` и перейдите в этот каталог
+- Скопируйте все файлы которые начинаются на `package` и имеют расширение `.json` с нашего локального компьютера в `/app` (не `/` веть мы установили робочей папкой а тобиш папкой верхнего уровня папку `/app`) в контейнере.
+- Установите зависимости в `node_modules`.
+- Скопируйте все файлы из нашего проекта в `.`, то есть `/app`, так как мы установили его как `WORKDIR`.
+- Сделайте expose пору `8080` в нашем контейнере.
+- Запустите `npm run serve` в контейнере.
+
+Давайте продолжим работу с `docker-compose.dev.yml`. После раздела `build` мы видим, что мы монтируем каталог `frontend` с нашего локального компьютера в `/app/frontend`. `ro` указывает, что подключенный том доступен только для чтения. Это нормально, так как мы будем редактировать файлы этого тома с нашего локального компьютера, а не из контейнера докера.
+
+Далее мы видим, что определение сервиса для `frontend` перечисляет `django-nginx` в `networks`. Это означает, что служба совместно использует сеть с другими службами, которые также находятся в `django-nginx`. Мы скоро увидим, почему это так.
+
+`depends_on` перечисляет сервисы, которые должны быть запущены до запуска этого.
+
+Теперь давайте посмотрим на NGINX. NGINX - это веб-сервер и обратный прокси, который будет играть важную роль в нашем приложении. NGINX аналогичен "front desk" в том, что он направляет трафик к указанным URL-адресам файлов или служб. Если вы знакомы с маршрутизацией URL в Django, я думаю, что будет справедливо сказать, что NGINX похож на высокоуровневую версию `urls.py` в том, что он направляет трафик на основе свойств входящих URL.
+
+```yaml
+  nginx:
+    container_name: nginx-dev
+    image: nginx:1.18.0-alpine
+    ports:
+      - "8000:80"
+    depends_on:
+      - web
+      - frontend
+    volumes:
+    - ./nginx/nginx_dev.conf:/etc/nginx/nginx.conf:ro
+    - django-static:/code/staticfiles
+    networks:
+      - django-nginx
+```
+
+В этом сервисе мы не включаем `build` в определение, потому что мы не модифицируем базовый образ. Поскольку мы не модифицируем его, мы можем просто включить `nginx:1.18.0-alpine`. Так как мы не указываем URL, механизм докера по умолчанию `docker.io` ищет эти изображения. `docker.io` - это частная компания, которая ведет реестр базовых изображений, которые могут использоваться буквально для чего угодно. Загляните в Docker (большая D) Hub, чтобы узнать, что люди и компании делают с докером.
+
+Далее мы указываем порты. Мы хотим сопоставить порт `8000` на нашей локальной машине с портом `80` этого контейнера. Это означает, что когда мы набираем `localhost: 8000` на нашей локальной машине, наши запросы направляются на порт `80` контейнера NGINX, который будет прослушивать этот порт и, соответственно, направлять трафик к месту назначения, указанному в его файле конфигурации.
+
+Мы видим, что этот порт находится в `django-nginx`. Это важно, потому что мы будем делать запросы как к службе `backend` API Django, так и к службе `frontend`, которая работает на нашем сервере разработки для VueJS на node.
+
+Давайте вернемся к `volumes`. Этот раздел определения сервиса говорит, что `nginx_dev.conf` монтируется в `/etc/nginx/nginx.conf`. Это позволяет нам разместить наш файл конфигурации NGINX внутри контейнера в файле, который NGINX обычно ищет для своей конфигурации (`/etc/nginx/nginx.conf`).
+
+Теперь, когда мы закончили анализ определения сервиса NGINX, давайте посмотрим на `nginx_dev.conf`. Это файл конфигурации NGINX, который мы будем использовать в нашей среде разработки. Но сначала давайте создадим эту папку и файл:
+
+```bash
+$ mkdir nginx && cat <<EOF > nginx/nginx_dev.conf
+user  nginx;
+worker_processes  1;
+
+events {
+    worker_connections  1024;
+}
+
+http {
+    include /etc/nginx/mime.types;
+    client_max_body_size 100m;
+
+    upstream web {
+        server web:8000;
+    }
+
+    upstream frontend {
+        server frontend:8080;
+    }
+
+
+    server {
+        listen 80;
+        charset utf-8;
+
+        # frontend urls
+        location / {
+            proxy_redirect off;
+            proxy_pass http://frontend;
+            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+            proxy_set_header Host $http_host;
+        }
+
+        # frontend dev-server
+        location /sockjs-node {
+            proxy_redirect off;
+            proxy_pass http://frontend;
+            proxy_set_header X-Real-IP  $remote_addr;
+            proxy_set_header X-Forwarded-For $remote_addr;
+            proxy_set_header Host $host;
+            proxy_set_header Upgrade $http_upgrade;
+            proxy_set_header Connection "upgrade";
+        }
+
+        # backend urls
+        location ~ ^/(admin|api) {
+            proxy_redirect off;
+            proxy_pass http://web;
+            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+            proxy_set_header Host $http_host;
+        }
+    }
+}
+EOF
+```
+
+Теперь давайте рассмотрим этот файл конфигурации NGINX подробно. Внутри `http` мы сначала определяем "псевдонимы" для `web` и `frontend`. NGINX называет это `upstream`:
+
+```
+upstream web {
+    server web:8000;
+}
+
+upstream frontend {
+    server frontend:8080;
+}
+```
+
+> Обратите внимание, как этот файл ссылается как на `frontend:8080`, так и на` web:8000`. Вот почему сервис `nginx` должен быть в сети` frontend` и `web`. Также обратите внимание, что мы слушаем порт `80` с помощью `listen 80; `.
+
+[Здесь](https://stackoverflow.com/a/5238430/6084948) есть полезное обяснение того, как NGINX обрабатывает несколько блоков `location`.
+
+Кроме того, [здесь](https://stackoverflow.com/questions/40516288/webpack-dev-server-with-nginx-proxy-pass) объяснение блока с `sockjs-node`.
+
+Затем обновите `web` в docker-compose.dev.yml, заменив `ports` на `expose`:
+
+```yaml
+  web:
+    container_name: web-dev
+    build:
+      context: ./backend
+    command: /start.sh
+    volumes:
+      - .:/code
+    expose:
+      - 8000
+    env_file:
+      - ./.env.dev
+    depends_on:
+      - db
+    networks:
+      - django-nginx
+```
+
+Теперь порт 8000 открыт только для других сервисов Docker. Порт больше не будет опубликован на хост-машине.
+
+> Для получения дополнительной информации о `ports vs expose` просмотрите [этот](https://stackoverflow.com/questions/40801772/what-is-the-difference-between-docker-compose-ports-vs-expose) вопрос на Stack Overflow.
+
+На данный момент мы должны проверить, все ли работает. Этот шаг сложен, потому что есть несколько движущихся частей, которые должны быть выполнены одновременно. Поэтому тавайте сверим то что у нас в `docker-compose.dev.yml`
+
+**docker-compose.dev.yml**
+
+```yaml
+version: '3'
+
+services:
+  db:
+    container_name: db-dev
+    image: postgres:12.3-alpine
+    env_file:
+      - ./.env.dev.db
+    networks:
+      - django-nginx
+
+  web:
+    container_name: web-dev
+    build:
+      context: ./backend
+    command: /start.sh
+    volumes:
+      - .:/code
+    expose:
+      - 8000
+    env_file:
+      - ./.env.dev
+    depends_on:
+      - db
+    networks:
+      - django-nginx
+
+  frontend:
+    container_name: frontend-dev
+    build:
+      context: ./frontend
+    volumes:
+      - './frontend:/app/:ro'
+      - '/app/node_modules'
+    networks:
+      - django-nginx
+    depends_on:
+      - web
+    environment:
+      - NODE_ENV=development
+
+  nginx:
+    container_name: nginx-dev
+    image: nginx:1.18.0-alpine
+    ports:
+      - "8000:80"
+    depends_on:
+      - web
+      - frontend
+    volumes:
+    - ./nginx/nginx_dev.conf:/etc/nginx/nginx.conf:ro
+    networks:
+      - django-nginx
+
+volumes:
+  django-static:
+
+networks:
+  django-nginx:
+    driver: bridge
+```
+
+```bash
+$ docker-compose -f docker-compose.dev.yml down -v
+$ docker-compose -f docker-compose.dev.yml up -d --build
+```
+
+Это создаст наши четыре контейнера:
+
+- `db-dev`
+- `web-dev`
+- `frontend-dev`
+- `nginx-dev`
+
+Также будут настроены сети, которые мы упоминали ранее.
+
+Обратите внимание, что `frontend` понимает, что мы запускаем Vue CLI внутри контейнера.
+
+Теперь у нас есть рабочий `frontend` и рабочий `web`. Тем не менее, эти службы еще не общаются друг с другом. Давайте соединим наш `web` с нашим `frontend`, отображая `questionnaires` из нашего Django API на новой странице в нашем приложении VueJS. 
+
+На этом этапе вся наша напряженная работа по настройке нашего локального сервера разработки начнет окупаться. Почему? Потому что теперь мы сможем редактировать исходный код наших приложений VueJS и Django, и мы увидим изменения, отраженные в обоих приложениях, без необходимости перезапуска наших док-контейнеров. 
+
+**Примечание**: это наша **среда разработки**. Она не подойдет для продакшена.
+
+А сейчас давайте сосредоточимся на соединении нашего `web` и `frontend`. Сначала добавим следующее в наше приложение VueJS:
+
+**src/router/index.js**
+
+```javascript
+  {
+    path: '/questionnaire',
+    name: 'Questionnaire',
+    component: () => import(/* webpackChunkName: "Questionnaire" */ '../views/Questionnaire.vue'),
+  },
+```
+
+**src/App.vue**
+
+```vue
+      <router-link to="/">Home</router-link> |
+      <router-link to="/questionnaire">Questionnaire</router-link> |
+      <router-link to="/about">About</router-link>
+```
+
+**src/views/Questionnaire.vue**
+
+```vue
+<template>
+  <div>
+    <div v-for="(questionnaire, i) in questionnaires" :key="i">
+      <h1 :key="i">{{ questionnaire.title }}</h1>
+    </div>
+  </div>
+</template>
+
+<script>
+export default {
+  data() {
+    return {
+      questionnaires: [],
+    };
+  },
+  mounted() {
+    this.fetchQuestionnaires();
+    document.title = 'Questionnaires';
+  },
+  methods: {
+    fetchQuestionnaires() {
+      fetch('http://localhost:8000/api/questionnaire/', {
+        method: 'GET',
+        headers: {
+          Accept: 'application/json',
+        },
+      })
+        .then((response) => {
+          if (response.ok) {
+            response.json().then((json) => {
+              this.questionnaires = json;
+            });
+          }
+        });
+    },
+  },
+};
+</script>
+
+<style scoped>
+  h1:hover {
+    color: #42b983;
+  }
+</style>
+```
+
+Для того чтобы мы увидели опросники нам нужно либо:
+
+1. Внедрить систему авторизации, которая получит токен и передаст токен в заголовке всех последующих запросов.
+
+2. Мы могли бы изменить разрешения для модели questionnaire, чтобы любой пользователь мог получить доступ к `/api/questionnaire/`.
+
+Давайте покачтопройтем по пути `2` и позже всеже добавим авторизацию.
+
+Все, что нам нужно сделать, это изменить `REST_FRAMEWORK` в наших настройках:
+
+```python
+REST_FRAMEWORK = {
+    'DEFAULT_PERMISSION_CLASSES': (
+        # 'rest_framework.permissions.IsAuthenticated',
+    ),
+    'DEFAULT_AUTHENTICATION_CLASSES': (
+        # 'rest_framework_jwt.authentication.JSONWebTokenAuthentication',
+        # 'rest_framework.authentication.SessionAuthentication',
+        # 'rest_framework.authentication.BasicAuthentication',
+    ),
+}
+```
+
+Теперь, когда мы закомментировали все классы разрешений и аутентификации, мы должны видеть наши сообщения в нашем VueJS.
+
+Если вы все ещё не видите ничего, убедитесь, что у вас есть записи в вашей базе данных. Вы можете проверить ваши опросники, перейдя к `localhost:8000/api/questionnaire/`.
+
+Вы, вероятно, не видите статических файлов в доступном для просмотра API. Давайте исправим это, добавив `python3 manage.py collectstatic --no-input --clear` в `start.sh` контейнера:
+
+**start.sh**
+
+```bash
+#!/bin/sh
+
+if [[ "$DATABASE" = "postgres" ]]
+then
+    echo "Waiting for postgres..."
+
+    while ! nc -z $SQL_HOST $SQL_PORT; do
+      sleep 0.1
+    done
+
+    echo "PostgreSQL started"
+fi
+
+cd backend || exit
+python3 manage.py flush --no-input
+python3 manage.py makemigrations
+python3 manage.py migrate --no-input
+python3 manage.py collectstatic --no-input --clear
+echo "from django.contrib.auth.models import User; User.objects.create_superuser('admin', 'a@a.com', 'admin')" | python3 manage.py shell
+python3 manage.py runserver 0.0.0.0:8000
+```
+
+Вы можете увидеть следующую ошибку:
+
+```
+django.core.exceptions.ImproperlyConfigured: You're using the staticfiles app without having set the STATIC_ROOT setting to a filesystem path.
+```
+
+Давайте добавим следующее в конец `settings.py`:
+
+```python
+STATIC_URL = "/staticfiles/"
+STATIC_ROOT = os.path.join(BASE_DIR, "staticfiles")
+
+MEDIA_URL = "/mediafiles/"
+MEDIA_ROOT = os.path.join(BASE_DIR, "staticfiles/mediafiles")
+```
+
+И на дальнейшее добавим возможность просматривать медиа файлы добавив в конец `urls.py` следующее:
+
+```python
+if bool(settings.DEBUG):
+    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+```
+
+**docker-compose.dev.yml**
+
+```yaml
+version: '3'
+
+services:
+  db:
+    container_name: db-dev
+    image: postgres:12.3-alpine
+    env_file:
+      - ./.env.dev.db
+    networks:
+      - django-nginx
+
+  web:
+    container_name: web-dev
+    build:
+      context: ./backend
+    command: /start.sh
+    volumes:
+      - .:/code
+      - django-static:/backend/staticfiles
+    expose:
+      - 8000
+    env_file:
+      - ./.env.dev
+    depends_on:
+      - db
+    networks:
+      - django-nginx
+
+  frontend:
+    container_name: frontend-dev
+    build:
+      context: ./frontend
+    volumes:
+      - './frontend:/app/:ro'
+      - '/app/node_modules'
+    networks:
+      - django-nginx
+    depends_on:
+      - web
+    environment:
+      - NODE_ENV=development
+
+  nginx:
+    container_name: nginx-dev
+    image: nginx:1.18.0-alpine
+    ports:
+      - "8000:80"
+    depends_on:
+      - web
+      - frontend
+    volumes:
+    - ./nginx/nginx_dev.conf:/etc/nginx/nginx.conf:ro
+    - django-static:/code/staticfiles
+    networks:
+      - django-nginx
+
+volumes:
+  django-static:
+
+networks:
+  django-nginx:
+    driver: bridge
+```
+
+Также, давайте создадим файл `.gitignore` и поместим в него `staticfiles`:
+
+```bash
+$ echo "staticfiles" > backend/.gitignore
+```
+
+Нам также нужно добавить следующий блок `location` в нашу конфигурацию NGINX:
+
+```
+    location /staticfiles {
+        proxy_pass http://web;
+    }
+```
+
+[Разберите](https://docs.docker.com/compose/reference/down/) контейнеры для разработки (и связанные тома с флагом `-v`):
+
+```bash
+$ docker-compose down -v
+```
+
+Затем создайте его снова:
+
+```bash
+$ docker-compose -f docker-compose.dev.yml up -d --build
+```
+
+Отлично, теперь мы должны видеть наши сообщения в нашем приложении VueJS.
+
+Давайте закоммитим эту работу, а затем настроим наш продакшин `docker-compose` с nginx и frontend.
+
+```bash
+$ git status
+На ветке vueapp
+Изменения, которые будут включены в коммит:
+  (use "git restore --staged <file>..." to unstage)
+        новый файл:    .dockerignore
+        новый файл:    backend/.dockerignore
+        новый файл:    backend/.gitignore
+        новый файл:    docker-compose.dev.yml
+        новый файл:    frontend/.dockerignore
+        новый файл:    frontend/Dockerfile
+        новый файл:    frontend/src/views/Questionnaire.vue
+        новый файл:    nginx/nginx_dev.conf
+
+Изменения, которые не в индексе для коммита:
+  (используйте «git add <файл>…», чтобы добавить файл в индекс)
+  (use "git restore <file>..." to discard changes in working directory)
+        изменено:      README.md
+        изменено:      backend/.dockerignore
+        изменено:      backend/.gitignore
+        изменено:      backend/backend/scripts/start.sh
+        изменено:      backend/backend/settings.py
+        изменено:      backend/backend/urls.py
+        изменено:      docker-compose.dev.yml
+        изменено:      frontend/.dockerignore
+        изменено:      frontend/Dockerfile
+        изменено:      frontend/src/App.vue
+        изменено:      frontend/src/router/index.js
+        изменено:      frontend/src/views/Questionnaire.vue
+
 ```

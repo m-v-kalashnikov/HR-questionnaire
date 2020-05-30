@@ -1,0 +1,62 @@
+version: '3'
+
+services:
+  db:
+    container_name: db-dev
+    image: postgres:12.3-alpine
+    env_file:
+      - ./.env.dev.db
+    networks:
+      - django-nginx
+
+  web:
+    container_name: web-dev
+    build:
+      context: ./backend
+    command: /start.sh
+    volumes:
+      - .:/code
+      - django-static:/backend/staticfiles
+    expose:
+      - 8000
+    env_file:
+      - ./.env.dev
+    depends_on:
+      - db
+    networks:
+      - django-nginx
+
+  frontend:
+    container_name: frontend-dev
+    build:
+      context: ./frontend
+    volumes:
+      - './frontend:/app/:ro'
+      - '/app/node_modules'
+    networks:
+      - django-nginx
+    depends_on:
+      - web
+    environment:
+      - NODE_ENV=development
+
+  nginx:
+    container_name: nginx-dev
+    image: nginx:1.18.0-alpine
+    ports:
+      - "8000:80"
+    depends_on:
+      - web
+      - frontend
+    volumes:
+    - ./nginx/nginx_dev.conf:/etc/nginx/nginx.conf:ro
+    - django-static:/code/staticfiles
+    networks:
+      - django-nginx
+
+volumes:
+  django-static:
+
+networks:
+  django-nginx:
+    driver: bridge
