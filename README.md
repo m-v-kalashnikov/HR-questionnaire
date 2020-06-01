@@ -1920,3 +1920,5 @@ $ git commit -m "fixed production docker-compose file, added scrpits and configu
 $ git checkout develop
 $ git merge vueapp
 ```
+Наконец, мы можем объединить нашу ветку `develop` с `master` и пометить коммит тэгом `1.0`.
+
