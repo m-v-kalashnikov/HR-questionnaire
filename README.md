@@ -1880,10 +1880,8 @@ $ git status
 На ветке vueapp
 Изменения, которые будут включены в коммит:
   (use "git restore --staged <file>..." to unstage)
-        удалено:       .dockerignore
         новый файл:    .env.prod
         новый файл:    .env.prod.db
-        удалено:       backend/.dockerignore
         новый файл:    backend/Dockerfile.prod
         новый файл:    backend/backend/scripts/start_prod.sh
         новый файл:    nginx/Dockerfile
@@ -1909,4 +1907,16 @@ $ git status
         изменено:      frontend/src/views/Questionnaire.vue
         изменено:      nginx/Dockerfile
         изменено:      nginx/nginx_prod.conf
+```
+
+```bash
+$ git add .
+$ git commit -m "fixed production docker-compose file, added scrpits and configuration files for production environment"
+```
+
+Теперь давайте объединим нашу ветку `vueapp` обратно с нашей веткой `develop`.
+
+```bash
+$ git checkout develop
+$ git merge vueapp
 ```
