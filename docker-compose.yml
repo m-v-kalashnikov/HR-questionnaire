@@ -2,21 +2,52 @@ version: '3'
 
 services:
   db:
-    container_name: db-dev
+    container_name: db-prod
     image: postgres:12.3-alpine
     env_file:
-      - ./.env.dev.db
+      - ./.env.prod.db
+    networks:
+      - django-nginx
 
   web:
-    container_name: web-dev
+    container_name: web-prod
     build:
       context: ./backend
-    command: /start.sh
+      dockerfile: Dockerfile.prod
+    command: /start_prod.sh
     volumes:
       - .:/code
-    ports:
-      - "8000:8000"
+      - django-static:/home/app/web/staticfiles
+      - django-media:/home/app/web/mediafiles
+    expose:
+      - 8000
     env_file:
-      - ./.env.dev
+      - ./.env.prod
     depends_on:
       - db
+    networks:
+      - django-nginx
+
+  nginx:
+    container_name: nginx-prod
+    build:
+      context: .
+      dockerfile: nginx/Dockerfile
+    ports:
+      - 800:80
+    depends_on:
+      - web
+    volumes:
+    - ./nginx/nginx_prod.conf:/etc/nginx/nginx.conf:ro
+    - django-static:/home/app/web/staticfiles
+    - django-media:/home/app/web/mediafiles
+    networks:
+      - django-nginx
+
+volumes:
+  django-static:
+  django-media:
+
+networks:
+  django-nginx:
+    driver: bridge

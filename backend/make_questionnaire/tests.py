@@ -33,7 +33,6 @@ class TestQuestionnaires(TestCase):
         payload = jwt_payload_handler(user)
         token = jwt_encode_handler(payload)
 
-
         verify_url = reverse('api-jwt-verify')
         credentials = {
             'token': token

@@ -1091,7 +1091,7 @@ EOF
 
 Теперь давайте рассмотрим этот файл конфигурации NGINX подробно. Внутри `http` мы сначала определяем "псевдонимы" для `web` и `frontend`. NGINX называет это `upstream`:
 
-```
+```editorconfig
 upstream web {
     server web:8000;
 }
@@ -1345,7 +1345,7 @@ python3 manage.py runserver 0.0.0.0:8000
 
 Вы можете увидеть следующую ошибку:
 
-```
+```bash
 django.core.exceptions.ImproperlyConfigured: You're using the staticfiles app without having set the STATIC_ROOT setting to a filesystem path.
 ```
 
@@ -1356,7 +1356,7 @@ STATIC_URL = "/staticfiles/"
 STATIC_ROOT = os.path.join(BASE_DIR, "staticfiles")
 
 MEDIA_URL = "/mediafiles/"
-MEDIA_ROOT = os.path.join(BASE_DIR, "staticfiles/mediafiles")
+MEDIA_ROOT = os.path.join(BASE_DIR, "mediafiles")
 ```
 
 И на дальнейшее добавим возможность просматривать медиа файлы добавив в конец `urls.py` следующее:
@@ -1437,11 +1437,12 @@ networks:
 
 ```bash
 $ echo "staticfiles" > backend/.gitignore
+$ echo "mediafiles" > backend/.gitignore
 ```
 
 Нам также нужно добавить следующий блок `location` в нашу конфигурацию NGINX:
 
-```
+```editorconfig
     location /staticfiles {
         proxy_pass http://web;
     }
@@ -1461,7 +1462,7 @@ $ docker-compose -f docker-compose.dev.yml up -d --build
 
 Отлично, теперь мы должны видеть наши сообщения в нашем приложении VueJS.
 
-Давайте закоммитим эту работу, а затем настроим наш продакшин `docker-compose` с nginx и frontend.
+Давайте закоммитим эту работу, а затем настроим наш продакшн `docker-compose` с nginx и frontend.
 
 ```bash
 $ git status
@@ -1492,5 +1493,420 @@ $ git status
         изменено:      frontend/src/App.vue
         изменено:      frontend/src/router/index.js
         изменено:      frontend/src/views/Questionnaire.vue
+$ git add .
+$ git commit -m "completed development environemnt: added nginx, connected frontend and backend, fixed static files"
+```
 
+## Production development environment
+
+Мы закончили настройку `docker-compose.dev.yml`. Мы будем запускать `docker-compose` с этим файлом при разработке нашего приложения. Чтобы начать разработку, все что нам нужно сделать, это запустить: 
+
+```bash
+$ docker-compose -f docker-compose.dev.yml up
+```
+
+Когда мы вносим какие-либо изменения в наши docker-compose или Dockerfiles, или в скрипты и команды, используемые для запуска наших docker-контейнеров, нам нужно будет добавить флаг `--build`. Если мы забудем добавить флаг сборки после редактирования файла, связанного с Docker, механизм Docker будет использовать кэшированную версию наших контейнеров.
+
+```bash
+$ docker-compose -f docker-compose.dev.yml up --build
+```
+
+Это заставит механизм докера искать любые изменения и перестраивать измененные слои. Это одна из лучших особенностей докера.
+
+Однако, когда мы запускаем это приложение в продакшн, мы не хотим использовать `npm run serve`, мы также не хотим использовать команду `runserver` Django; эта команда не предназначена для этого (Django - это платформа для создания веб-приложений, а не веб-сервер). Вместо этого мы будем раздавать `коллекцию статических файлов`, оптимизированную для продакшна. Эта `коллекция статических файлов` генерируется с помощью `npm run build` и находится в папке `dist` в `frontend`. А для Django мы заменим `runserver` на [**gunicorn**](https://gunicorn.org/).
+
+Давайте вернемся к `docker-compose.yml` и подумаем о том, что нам нужно. Во-первых, нам не нужен сервис `frontend`, который мы добавили в `docker-compose.dev.yml`. Нам понадобится NGINX, но в нашем конфигурационном файле NGING для прода нам не нужно слушать `/sockjs-node`.
+
+Чтобы уточнить, нам нужно отредактировать существующий файл `docker-compose.yml` для прода, а также нам нужно будет создать новый файл с именем `nginx_prod.conf` для замены `nginx_dev.conf` в нашей продакшн среде. Давайте сначала посмотрим на `docker-compose.yml`, а затем `nginx_prod.conf`, и, наконец, мы создадим `Dockerfile`, который объединяет создание `коллекции статических файлов` (которая будет нашим продакшн приложением VueJS) с запуском нашего контейнер NGINX.
+
+А также мы добавим продакшн `Dockerfile` для `web` сервиса чтобы сделать итоговое приложение более качественным.
+
+Начнем с `Dockerfile`. Здесь мы будем использовать [многоэтапную сборку](https://docs.docker.com/develop/develop-images/multistage-build/) Docker, чтобы уменьшить окончательный размер образа. По сути, `builder` - это временный образ, который используется для сборки Python wheels. Затем wheels копируются в конечный продакшн образ, а образ `builder` отбрасывается.
+
+> Вы могли бы пойти дальше к [многоэтапному подходу](https://stackoverflow.com/a/53101932/1799408) к сборке и использовать один Dockerfile вместо создания двух Dockerfile. Подумайте о плюсах и минусах использования этого подхода для двух разных файлов.
+
+**Dockerfile.prod**
+
+```Dockerfile
+##########################
+###### BUILD STAGE #######
+##########################
+
+# pull official base image
+FROM python:3.8.3-alpine as builder
+
+# set work directory
+RUN mkdir /code
+WORKDIR /code
+
+# set environment variables
+ENV PYTHONDONTWRITEBYTECODE 1
+ENV PYTHONUNBUFFERED 1
+
+# install psycopg2 dependencies
+RUN apk update && apk add postgresql-dev gcc python3-dev musl-dev
+RUN pip install --upgrade pip
+
+# lint
+RUN pip install flake8
+COPY . /code/
+RUN flake8 --ignore=E501,F401 .
+
+# install dependencies
+COPY ./requirements.txt .
+RUN pip wheel --no-cache-dir --no-deps --wheel-dir /code/wheels -r requirements.txt
+
+
+##########################
+#### PRODUCTION STAGE ####
+##########################
+
+# pull official base image
+FROM python:3.8.3-alpine
+
+# create directory for the app user
+RUN mkdir -p /home/app
+
+# create the app user
+RUN addgroup -S app && adduser -S app -G app
+
+# create the appropriate directories
+ENV HOME=/home/app
+ENV APP_HOME=/home/app/web
+RUN mkdir $APP_HOME
+RUN mkdir $APP_HOME/staticfiles
+RUN mkdir $APP_HOME/mediafiles
+WORKDIR $APP_HOME
+
+# install dependencies
+RUN apk update && apk add libpq
+COPY --from=builder /code/wheels /wheels
+COPY --from=builder /code/requirements.txt .
+RUN pip install --upgrade pip
+RUN pip install --no-cache /wheels/*
+
+# copy entrypoint-prod.sh
+COPY ./backend/scripts/start_prod.sh /
+
+# copy project
+COPY . $APP_HOME
+
+# chown all the files to the app user
+RUN chown -R app:app $APP_HOME
+
+# change to the app user
+USER app
+```
+
+Вы заметили, что мы создали пользователя без полномочий root? По умолчанию Docker запускает контейнерные процессы как root внутри контейнера. Это плохая практика, поскольку злоумышленники могут получить root-доступ к хосту Docker, если им удастся вырваться из контейнера. Если вы root в контейнере, вы будете root на хосте.  
+
+Обновите `web` в файле `docker-compose.yml` для сборки с помощью `Dockerfile.prod`:
+
+```yaml
+  web:
+    container_name: web-prod
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.prod
+    command: /start_prod.sh
+    volumes:
+      - .:/code
+      - django-static:/home/app/web/staticfiles
+      - django-media:/home/app/web/mediafiles
+    expose:
+      - 8000
+    env_file:
+      - ./.env.prod
+    depends_on:
+      - db
+    networks:
+      - django-nginx
+```
+
+Вы моглы заметить что мы заменили `command:`, а также `django-static:` и `django-media:`. В последних двух мы просто указали путь к директориям которые используются для хранения медиа и статики. А в `start_prod.sh` мы уберем команду [flush](https://docs.djangoproject.com/en/2.2/ref/django-admin/#flush) и установим запуск сервера через gunicorn.
+
+**start_prod.sh**
+
+```bash
+#!/bin/sh
+
+if [[ "$DATABASE" = "postgres" ]]
+then
+    echo "Waiting for postgres..."
+
+    while ! nc -z $SQL_HOST $SQL_PORT; do
+      sleep 0.1
+    done
+
+    echo "PostgreSQL started"
+fi
+
+python3 manage.py makemigrations
+python3 manage.py migrate --no-input
+python3 manage.py collectstatic --no-input --clear
+echo "from django.contrib.auth.models import User; User.objects.create_superuser('$ADMIN_USER', '$ADMIN_MAIL', '$ADMIN_PASSWORD', first_name='$ADMIN_FIRST_NAME', last_name='$ADMIN_LAST_NAME')" | python3 manage.py shell
+gunicorn backend.wsgi -b 0.0.0.0:8000
+```
+
+Мы добавили возможность указывать основные данные суперпользователя указывая соответствующие переменные в `.env.prod`. 
+
+Также нам нужно сделать `start_prod.sh` исполняемым:
+
+```bash
+$ sudo chmod +x backend/backend/scripts/start_prod.sh
+```
+
+И добавить gunicorn в `requirements.txt`:
+
+```requirements.txt
+Django==3.0.6
+psycopg2-binary==2.8.5
+djangorestframework==3.11.0
+markdown==3.2.2
+django-filter==2.2.0
+djangorestframework-jwt==1.11.0
+googletrans==2.4.0
+gunicorn==20.0.4
+```
+
+Теперь давайте посмотрим на `docker-compose.yml`.
+
+**docker-compose.yml**
+
+```yaml
+version: '3'
+
+services:
+  db:
+    container_name: db-prod
+    image: postgres:12.3-alpine
+    env_file:
+      - ./.env.prod.db
+    networks:
+      - django-nginx
+
+  web:
+    container_name: web-prod
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.prod
+    command: /start_prod.sh
+    volumes:
+      - .:/code
+      - django-static:/home/app/web/staticfiles
+      - django-media:/home/app/web/mediafiles
+    expose:
+      - 8000
+    env_file:
+      - ./.env.prod
+    depends_on:
+      - db
+    networks:
+      - django-nginx
+
+  nginx:
+    container_name: nginx-prod
+    build:
+      context: .
+      dockerfile: nginx/Dockerfile
+    ports:
+      - 800:80
+    depends_on:
+      - web
+    volumes:
+    - ./nginx/nginx_prod.conf:/etc/nginx/nginx.conf:ro
+    - django-static:/home/app/web/staticfiles
+    - django-media:/home/app/web/mediafiles
+    networks:
+      - django-nginx
+
+volumes:
+  django-static:
+  django-media:
+
+networks:
+  django-nginx:
+    driver: bridge
+```
+
+Обратите внимание на две вещи:
+
+1. Мы не определяем службу `frontend` в файле `docker-compose.yml`. Также мы монтируем другой файл конфигурации для службы NGINX. Давайте посмотрим на этот файл, `nginx_prod.conf`:
+
+2. Важные различия между нашим файлом `docker-compose.dev.yml` и этим файлом` docker-compose.yml`:
+
+**docker-compose.dev.yml**
+
+```yaml
+  nginx:
+    image: nginx:1.18.0-alpine
+```
+
+**docker-compose.yml**
+
+```yaml
+  nginx:
+    build:
+      context: .
+      dockerfile: nginx/Dockerfile
+```
+
+Это означает, что мы используем собственный `Dockerfile` для нашей производственной среды и базовый образ `nginx:1.18.0-alpine` для нашей среды разработки. Мы посмотрим на этот Dockerfile после того, как посмотрим на файл конфигурации NGINX: 
+
+**nginx_prod.conf**
+
+```editorconfig
+user  nginx;
+worker_processes  1;
+
+events {
+    worker_connections  1024;
+}
+
+http {
+    include /etc/nginx/mime.types;
+    client_max_body_size 100m;
+
+    upstream web {
+        server web:8000;
+    }
+
+    server {
+        listen 80;
+        charset utf-8;
+
+        root /dist/;
+        index index.html;
+
+
+        # backend urls
+        location ~ ^/(api) {
+            proxy_redirect off;
+            proxy_pass http://web;
+            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+            proxy_set_header Host $http_host;
+        }
+
+        # backend static
+        location /staticfiles/ {
+            autoindex on;
+            alias /home/app/web/staticfiles/;
+        }
+
+        # backend madia
+        location /mediafiles/ {
+            autoindex on;
+            alias /home/app/web/mediafiles/;
+        }
+
+        # frontend urls
+        location / {
+            try_files $uri $uri/ @rewrites;
+        }
+
+        location @rewrites {
+            rewrite ^(.+)$ /index.html last;
+        }
+    }
+}
+```
+
+В этом файле конфигурации NGINX мы направляем трафик в наш контейнер Django только для запросов `api` (или любого другого запроса, который мы хотим определить вручную), а весь остальной трафик направляется в `index.html`, где наш VueJS приложение берет на себя маршрутизацию (например, с маршрутом `/questionnaire`, который мы определили ранее). Вход в админку мы сделали через `api` и дальше путь который мы определим в переменной `ADMIN_PANEL_URL` в нашем `.env.prod`. Сделано это так как не очень хорошо если каждый будет знать как зайти в админку и сам Django нам рекомендует изменить путь по которому будет осуществляться доступ в админку.
+
+```python
+    path('api/{}/'.format(os.getenv('ADMIN_PANEL_URL')), admin.site.urls),
+```
+
+Теперь давайте посмотрим на `Dockerfile` для нашего сервиса NGINX. Здесь мы также используем многоэтапную сборку но ту которая указана в [документации](https://vuejs.org/v2/cookbook/dockerize-vuejs-app.html) VueJS:
+
+**nginx/Dockerfile**
+
+```Dockerfile
+##########################
+###### BUILD STAGE #######
+##########################
+
+FROM node:14.3.0-alpine as build-stage
+WORKDIR /app/
+COPY frontend/package*.json /app/
+RUN npm install
+COPY frontend /app/
+RUN npm run build
+
+
+##########################
+#### PRODUCTION STAGE ####
+##########################
+
+FROM nginx:1.18.0-alpine as production-stage
+COPY nginx/nginx_prod.conf /etc/nginx/nginx.conf
+COPY --from=build-stage /app/dist /dist/
+EXPOSE 80
+CMD ["nginx", "-g", "daemon off;"]
+```
+
+Раздел `build stage` этого Dockerfile отвечает за сборку нашей `коллекции статических файлов`, которую мы будем использовать в работе. `build stage` берет `коллекцию статических файлов` (созданную с помощью `npm run build`) из `/app/dist` нашего `build stage` и копирует этот каталог в папку `/dist` нашего контейнера NGINX, где они обслуживаются NGINX.
+
+Теперь давайте запустим наш производственный файл `docker-compose`, чтобы проверить его:
+
+```bash
+$ docker-compose up --build
+```
+
+Вы должны увидеть, что что-то не работает должным образом: запросы в нашу службу `backend` не выполняются:
+
+```bash
+GET http://localhost:8000/api/questionnaire/ net::ERR_CONNECTION_REFUSED
+```
+
+Во-первых, добавьте `django-cors-headers` в `requirements.txt`.
+
+```requirements.txt
+django-cors-headers==3.3.0
+```
+
+Затем в `settings.py` добавьте `'corsheaders',` в `INSTALLED_APPS` и добавьте `'corsheaders.middleware.CorsMiddleware',` в `MIDDLEWARE`.
+
+Теперь давайте запустим наше приложение и проверим, нет ли у нас ошибки с `CORS` при попытке доступа к нашему `backend` API:
+
+```bash
+$ docker-compose up --build
+```
+
+Теперь мы должны видеть наши сообщения без ошибок `CORS`. Мы уже сильно изменились с момента нашего последнего коммита. Давайте закоммиттим наши изменения сейчас. 
+
+```bash
+$ git status
+На ветке vueapp
+Изменения, которые будут включены в коммит:
+  (use "git restore --staged <file>..." to unstage)
+        удалено:       .dockerignore
+        новый файл:    .env.prod
+        новый файл:    .env.prod.db
+        удалено:       backend/.dockerignore
+        новый файл:    backend/Dockerfile.prod
+        новый файл:    backend/backend/scripts/start_prod.sh
+        новый файл:    nginx/Dockerfile
+        новый файл:    nginx/nginx_prod.conf
+
+Изменения, которые не в индексе для коммита:
+  (используйте «git add <файл>…», чтобы добавить файл в индекс)
+  (use "git restore <file>..." to discard changes in working directory)
+        изменено:      .env.prod
+        изменено:      .gitignore
+        изменено:      README.md
+        изменено:      backend/.gitignore
+        изменено:      backend/Dockerfile
+        изменено:      backend/Dockerfile.prod
+        изменено:      backend/backend/scripts/start_prod.sh
+        изменено:      backend/backend/settings.py
+        изменено:      backend/backend/urls.py
+        изменено:      backend/make_questionnaire/models/questionnaire_model.py
+        изменено:      backend/make_questionnaire/serializers.py
+        изменено:      backend/make_questionnaire/tests.py
+        изменено:      backend/requirements.txt
+        изменено:      docker-compose.yml
+        изменено:      frontend/src/views/Questionnaire.vue
+        изменено:      nginx/Dockerfile
+        изменено:      nginx/nginx_prod.conf
 ```

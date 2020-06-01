@@ -13,7 +13,6 @@ class Questionnaire(models.Model):
                             max_length=256,
                             )
 
-
     class Meta:
         verbose_name = 'Опросник'
         verbose_name_plural = 'Опросники'
@@ -22,7 +21,6 @@ class Questionnaire(models.Model):
         return self.title
 
     def _generate_slug(self):
-        max_length = self._meta.get_field('slug').max_length
         value = Translator().translate('{}'.format(self.title), dest='en').text
         slug_candidate = slug_original = slugify(value, allow_unicode=True)
         for i in itertools.count(1):

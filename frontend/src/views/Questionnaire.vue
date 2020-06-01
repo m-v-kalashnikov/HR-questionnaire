@@ -19,7 +19,7 @@ export default {
   },
   methods: {
     fetchQuestionnaires() {
-      fetch('http://localhost:8000/api/questionnaire/', {
+      fetch('api/questionnaire/', {
         method: 'GET',
         headers: {
           Accept: 'application/json',
