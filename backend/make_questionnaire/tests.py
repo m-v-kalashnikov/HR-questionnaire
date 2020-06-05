@@ -2,21 +2,43 @@ from django.contrib.auth.models import User
 from django.test import TestCase
 from django.urls import reverse
 
+from rest_framework.test import APITestCase
 from rest_framework import status
 
-from rest_framework_jwt.settings import api_settings
 
-
-class TestQuestionnaires(TestCase):
+class UnauthenticatedTestQuestionnaires(APITestCase):
     """Questionnaire Tests"""
 
     def test_get_questionnaires(self):
         """
         Unauthenticated users should not be able to access questionnaires via APIListView
         """
+
         url = reverse('make_questionnaire_app:questionnaire-list')
-        resp = self.client.get(url)
-        self.assertEqual(resp.status_code, status.HTTP_401_UNAUTHORIZED)
+        response = self.client.get(url)
+
+        print('')
+        print('')
+        print('make_questionnaire: test 1')
+        print('Unauthenticated users should not be able to access questionnaires via APIListView')
+        print(response.data)
+        print('_________________')
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+
+
+class AuthenticatedTestQuestionnaires(APITestCase):
+    """Questionnaire Tests"""
+
+    def setUp(self):
+        # create a new user making a post request to djoser endpoint
+        self.user = self.client.post('/auth/users/', data={'username': 'Test2', 'password': 'TestPassword2'})
+        # obtain a json web token for the newly created user
+        response = self.client.post('/auth/jwt/create/', data={'username': 'Test2', 'password': 'TestPassword2'})
+        self.token = response.data['access']
+        self.api_authentication()
+
+    def api_authentication(self):
+        self.client.credentials(HTTP_AUTHORIZATION='Bearer ' + self.token)
 
     def test_header_for_token_verification(self):
         """
@@ -24,19 +46,16 @@ class TestQuestionnaires(TestCase):
         Tests that users can access questionnaires with JWT tokens
         """
 
-        jwt_payload_handler = api_settings.JWT_PAYLOAD_HANDLER
-        jwt_encode_handler = api_settings.JWT_ENCODE_HANDLER
-
-        user = User.objects.create_user(username='user', email='user@foo.com', password='pass')
-        user.is_active = True
-        user.save()
-        payload = jwt_payload_handler(user)
-        token = jwt_encode_handler(payload)
-
-        verify_url = reverse('api-jwt-verify')
+        verify_url = reverse('jwt-verify')
         credentials = {
-            'token': token
+            'token': self.token
         }
-
         resp = self.client.post(verify_url, credentials, format='json')
+
+        print('')
+        print('')
+        print('make_questionnaire: test 2')
+        print('Tests that users can access questionnaires with JWT tokens')
+        print(resp.data)
+        print('_________________')
         self.assertEqual(resp.status_code, status.HTTP_200_OK)

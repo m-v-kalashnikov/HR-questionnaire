@@ -1,3 +1,12 @@
-from django.shortcuts import render
+from rest_framework import viewsets
+from rest_framework.permissions import IsAuthenticated
 
-# Create your views here.
+from .models import UserProfile
+from .permissions import IsOwnerProfileOrReadOnly
+from .serializers import UserProfileSerializer
+
+
+class UserProfileViewSet(viewsets.ModelViewSet):
+    queryset = UserProfile.objects.all()
+    serializer_class = UserProfileSerializer
+    permission_classes = [IsOwnerProfileOrReadOnly, IsAuthenticated]
