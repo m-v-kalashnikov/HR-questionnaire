@@ -76,7 +76,7 @@ export default {
     }
   },
   methods: {
-    handleLogin: function () {
+    handleLogin() {
       this.loading = true;
       this.$validator.validateAll().then((isValid) => {
         if (!isValid) {

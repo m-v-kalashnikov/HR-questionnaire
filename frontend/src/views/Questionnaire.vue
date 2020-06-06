@@ -7,6 +7,9 @@
 </template>
 
 <script>
+// import authHeader from '../services/auth-header';
+const user = JSON.parse(localStorage.getItem('user'));
+
 export default {
   data() {
     return {
@@ -23,7 +26,9 @@ export default {
         method: 'GET',
         headers: {
           Accept: 'application/json',
+          Authorization: `Bearer ${user.accessToken}`,
         },
+        // headers: authHeader(),
       })
         .then((response) => {
           if (response.ok) {
