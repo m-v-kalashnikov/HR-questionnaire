@@ -12,9 +12,12 @@ import {
   faQuestionCircle,
 } from '@fortawesome/free-solid-svg-icons';
 import Vue from 'vue';
+import Axios from 'axios';
 import App from './App.vue';
 import router from './router';
 import store from './store';
+
+Vue.prototype.$http = Axios;
 
 library.add(faHome, faUser, faUserPlus, faSignInAlt, faSignOutAlt, faQuestionCircle);
 

@@ -15,11 +15,11 @@ export const auth = {
       return AuthService.login(user).then(
         // eslint-disable-next-line no-shadow
         (user) => {
-          console.log('loginSuccess', user);
           commit('loginSuccess', user);
           return Promise.resolve(user);
         },
         (error) => {
+          // const error = 'Хм... Выдимо вы опечатались при вводе имени пользователя или пароля...';
           commit('loginFailure');
           return Promise.reject(error);
         },
@@ -33,10 +33,14 @@ export const auth = {
     register({ commit }, user) {
       return AuthService.register(user).then(
         (response) => {
+          // eslint-disable-next-line no-console
+          console.log(response);
           commit('registerSuccess');
           return Promise.resolve(response.data);
         },
         (error) => {
+          // eslint-disable-next-line no-console
+          console.log(error);
           commit('registerFailure');
           return Promise.reject(error);
         },

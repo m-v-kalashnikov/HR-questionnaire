@@ -86,8 +86,14 @@ export default {
 
         if (this.user.username && this.user.password) {
           this.$store.dispatch('auth/login', this.user).then(
-            () => {
-              this.$router.push('/profile');
+            // eslint-disable-next-line no-unused-vars
+            (user) => {
+              if (localStorage.getItem('next')) {
+                this.$router.push(localStorage.getItem('next'));
+                localStorage.removeItem('next');
+              } else {
+                this.$router.push('/profile');
+              }
             },
             (error) => {
               this.loading = false;

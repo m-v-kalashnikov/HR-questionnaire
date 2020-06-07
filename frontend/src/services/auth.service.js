@@ -1,17 +1,17 @@
 import axios from 'axios';
 
-const API_URL = '/auth/';
+const API_URL = 'auth/';
 
 class AuthService {
   // eslint-disable-next-line class-methods-use-this
   login(user) {
     return axios
-      .post(`${API_URL}jwt/create`, {
+      .post(`${API_URL}jwt/create/`, {
         username: user.username,
         password: user.password,
       })
       .then((response) => {
-        if (response.data.accessToken) {
+        if (response.data.access) {
           localStorage.setItem('user', JSON.stringify(response.data));
         }
 

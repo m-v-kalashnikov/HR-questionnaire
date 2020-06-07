@@ -37,9 +37,9 @@
           </router-link>
         </li>
         <li class="nav-item">
-          <a class="nav-link" href @click.prevent="logOut">
+          <router-link to="/logout" class="nav-link">
             <font-awesome-icon icon="sign-out-alt" />Выйти
-          </a>
+          </router-link>
         </li>
       </ul>
     </nav>
@@ -63,28 +63,14 @@ export default {
       this.$router.push('/login');
     },
   },
+  created() {
+    this.$http.interceptors.response.use((response) => response, (error) => {
+      if (error.response.status === 401) {
+        localStorage.setItem('next', `${window.location.pathname}`);
+        this.logOut();
+      }
+      return error;
+    });
+  },
 };
 </script>
-
-<!--<style>-->
-<!--#app {-->
-<!--  font-family: Avenir, Helvetica, Arial, sans-serif;-->
-<!--  -webkit-font-smoothing: antialiased;-->
-<!--  -moz-osx-font-smoothing: grayscale;-->
-<!--  text-align: center;-->
-<!--  color: #2c3e50;-->
-<!--}-->
-
-<!--#nav {-->
-<!--  padding: 30px;-->
-<!--}-->
-
-<!--#nav a {-->
-<!--  font-weight: bold;-->
-<!--  color: #2c3e50;-->
-<!--}-->
-
-<!--#nav a.router-link-exact-active {-->
-<!--  color: #42b983;-->
-<!--}-->
-<!--</style>-->

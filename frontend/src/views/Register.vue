@@ -5,7 +5,6 @@
         id="profile-img"
         src="//ssl.gstatic.com/accounts/ui/avatar_2x.png"
         class="profile-img-card"
-        alt=""
       />
       <form name="form" @submit.prevent="handleRegister">
         <div v-if="!successful">
@@ -28,7 +27,7 @@
             <label for="email">Email</label>
             <input
               v-model="user.email"
-              v-validate="'required|email|max:50'"
+              v-validate="'email|max:50'"
               type="email"
               class="form-control"
               name="email"

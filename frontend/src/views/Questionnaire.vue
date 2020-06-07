@@ -7,8 +7,7 @@
 </template>
 
 <script>
-// import authHeader from '../services/auth-header';
-const user = JSON.parse(localStorage.getItem('user'));
+import authHeader from '../services/auth-header';
 
 export default {
   data() {
@@ -22,20 +21,25 @@ export default {
   },
   methods: {
     fetchQuestionnaires() {
-      fetch('api/questionnaire/', {
-        method: 'GET',
-        headers: {
-          Accept: 'application/json',
-          Authorization: `Bearer ${user.accessToken}`,
-        },
-        // headers: authHeader(),
-      })
+      // fetch('api/questionnaire/', {
+      //   method: 'GET',
+      //   headers: authHeader(),
+      // })
+      //   .then((response) => {
+      //     if (response.ok) {
+      //       response.json().then((json) => {
+      //         // eslint-disable-next-line no-console
+      //         console.log(json);
+      //         this.questionnaires = json;
+      //       });
+      //     }
+      //   });
+      this.$http
+        .get('api/questionnaire/', {
+          headers: authHeader(),
+        })
         .then((response) => {
-          if (response.ok) {
-            response.json().then((json) => {
-              this.questionnaires = json;
-            });
-          }
+          this.questionnaires = response.data;
         });
     },
   },
