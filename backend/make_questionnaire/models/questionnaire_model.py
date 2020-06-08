@@ -2,10 +2,21 @@ import itertools
 from django.db import models
 from django.utils.text import slugify
 from googletrans import Translator
+from django.utils.translation import gettext_lazy as _
 
 
 class Questionnaire(models.Model):
-    title = models.CharField('название', max_length=128)
+    class QuestionnaireType(models.TextChoices):
+        QUESTIONS = 'QS', _('Опросник')
+        TESTS = 'TS', _('Тесты')
+
+    title = models.CharField('Название', max_length=128)
+    questionnaire_type = models.CharField('Тип вопросов',
+                                          max_length=2,
+                                          choices=QuestionnaireType.choices,
+                                          default=QuestionnaireType.QUESTIONS,
+                                          )
+    description = models.CharField('Описание', max_length=512, null=True)
     created_at = models.DateTimeField(auto_now_add=True, null=True)
     updated_at = models.DateTimeField(auto_now=True, null=True)
     slug = models.SlugField(default='',
