@@ -13,9 +13,6 @@
             <font-awesome-icon icon="question-circle" />Опросники
           </router-link>
         </li>
-        <li class="nav-item">
-          <router-link v-if="currentUser" to="/user" class="nav-link">User</router-link>
-        </li>
       </ul>
       <ul v-if="!currentUser" class="navbar-nav ml-auto">
         <li class="nav-item">
@@ -30,10 +27,15 @@
         </li>
       </ul>
       <ul v-if="currentUser" class="navbar-nav ml-auto">
+        <li v-if="currentUser.is_superuser" class="nav-item">
+          <a class="nav-link" href @click.prevent="toAdmin">
+            <font-awesome-icon icon="user-cog" />В админ панель
+          </a>
+        </li>
         <li class="nav-item">
           <router-link to="/profile" class="nav-link">
             <font-awesome-icon icon="user" />
-            {{ currentUser.username }}
+            <span class="text-capitalize">{{ currentUser.username }}</span>
           </router-link>
         </li>
         <li class="nav-item">
@@ -54,13 +56,16 @@
 export default {
   computed: {
     currentUser() {
-      return this.$store.state.auth.user;
+      return this.$store.state.user;
     },
   },
   methods: {
     logOut() {
-      this.$store.dispatch('auth/logout');
+      this.$store.dispatch('logout');
       this.$router.push('/login');
+    },
+    toAdmin() {
+      window.location.href = process.env.VUE_APP_ADMIN_URL;
     },
   },
   created() {
@@ -74,3 +79,12 @@ export default {
   },
 };
 </script>
+
+<style>
+svg {
+  margin: 0px 5px;
+}
+  .navbar-dark{
+    background: #2c3e50 !important;
+  }
+</style>

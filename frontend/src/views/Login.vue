@@ -6,49 +6,51 @@
         src="//ssl.gstatic.com/accounts/ui/avatar_2x.png"
         class="profile-img-card"
         alt=""/>
-      <form name="form" @submit.prevent="handleLogin">
-        <div class="form-group">
-          <label for="username">Username</label>
-          <input
-            v-model="user.username"
-            v-validate="'required'"
-            type="text"
-            class="form-control"
-            name="username"
-            id="username"
-          />
-          <div
-            v-if="errors.has('username')"
-            class="alert alert-danger"
-            role="alert"
-          >Username is required!</div>
-        </div>
-        <div class="form-group">
-          <label for="password">Password</label>
-          <input
-            v-model="user.password"
-            v-validate="'required'"
-            type="password"
-            class="form-control"
-            name="password"
-            id="password"
-          />
-          <div
-            v-if="errors.has('password')"
-            class="alert alert-danger"
-            role="alert"
-          >Password is required!</div>
-        </div>
-        <div class="form-group">
-          <button class="btn btn-primary btn-block" :disabled="loading">
-            <span v-show="loading" class="spinner-border spinner-border-sm"></span>
-            <span>Login</span>
-          </button>
-        </div>
-        <div class="form-group">
-          <div v-if="message" class="alert alert-danger" role="alert">{{message}}</div>
-        </div>
-      </form>
+      <ValidationObserver ref="form" v-slot="{ handleSubmit }">
+        <form @submit.prevent="handleSubmit(onLogin)">
+          <div class="form-group">
+            <ValidationProvider name="username" rules="required" v-slot="{ errors }">
+              <label for="username">Имя пользователя</label>
+              <input
+                v-model="user.username"
+                type="text"
+                class="form-control"
+                id="username"
+              />
+              <div
+                v-if="errors[0]"
+                class="alert alert-danger"
+                role="alert"
+              >Хм... Имя пользователя для входа нужно...</div>
+            </ValidationProvider>
+          </div>
+          <div class="form-group">
+            <ValidationProvider name="password" rules="required" v-slot="{ errors }">
+              <label for="password">Пароль</label>
+              <input
+                v-model="user.password"
+                type="password"
+                class="form-control"
+                id="password"
+              />
+              <div
+                v-if="errors[0]"
+                class="alert alert-danger"
+                role="alert"
+              >Хм... Пароль нужен как бы...</div>
+            </ValidationProvider>
+          </div>
+          <div class="form-group">
+            <button class="btn btn-primary btn-block" :disabled="loading">
+              <span v-show="loading" class="spinner-border spinner-border-sm"></span>
+              <span>Войти</span>
+            </button>
+          </div>
+          <div class="form-group">
+            <div v-if="message" class="alert alert-danger" role="alert">{{message}}</div>
+          </div>
+        </form>
+      </ValidationObserver>
     </div>
   </div>
 </template>
@@ -67,7 +69,7 @@ export default {
   },
   computed: {
     loggedIn() {
-      return this.$store.state.auth.status.loggedIn;
+      return this.$store.state.status.loggedIn;
     },
   },
   created() {
@@ -76,34 +78,26 @@ export default {
     }
   },
   methods: {
-    handleLogin() {
+    onLogin() {
       this.loading = true;
-      this.$validator.validateAll().then((isValid) => {
-        if (!isValid) {
-          this.loading = false;
-          return;
-        }
-
-        if (this.user.username && this.user.password) {
-          this.$store.dispatch('auth/login', this.user).then(
-            // eslint-disable-next-line no-unused-vars
-            (user) => {
-              if (localStorage.getItem('next')) {
-                this.$router.push(localStorage.getItem('next'));
-                localStorage.removeItem('next');
-              } else {
-                this.$router.push('/profile');
-              }
-            },
-            (error) => {
-              this.loading = false;
-              this.message = (error.response && error.response.data)
+      if (this.user.username && this.user.password) {
+        this.$store.dispatch('login', this.user).then(
+          () => {
+            if (localStorage.getItem('next')) {
+              this.$router.push(localStorage.getItem('next'));
+              localStorage.removeItem('next');
+            } else {
+              this.$router.push('/profile');
+            }
+          },
+          (error) => {
+            this.loading = false;
+            this.message = (error.response && error.response.data)
                 || error.message
                 || error.toString();
-            },
-          );
-        }
-      });
+          },
+        );
+      }
     },
   },
 };

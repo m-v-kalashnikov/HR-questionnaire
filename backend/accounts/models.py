@@ -4,11 +4,11 @@ from django.db import models
 
 class UserProfile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name="profile")
-    description = models.TextField(blank=True, null=True)
-    location = models.CharField(max_length=30, blank=True, null=True)
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
-    is_manager = models.BooleanField(default=False)
+    description = models.TextField('Описание', blank=True, null=True)
+    created_at = models.DateTimeField('Дата создания', auto_now_add=True)
+    updated_at = models.DateTimeField('Дата модификации', auto_now=True)
+    is_manager = models.BooleanField('Менеджер', default=False)
+    want_to_be_manager = models.BooleanField('Хочет быть менеджером', default=False)
 
     class Meta:
         verbose_name = 'Профиль'

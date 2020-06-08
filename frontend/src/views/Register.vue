@@ -5,59 +5,62 @@
         id="profile-img"
         src="//ssl.gstatic.com/accounts/ui/avatar_2x.png"
         class="profile-img-card"
+        alt="user profile photo"
       />
-      <form name="form" @submit.prevent="handleRegister">
-        <div v-if="!successful">
-          <div class="form-group">
-            <label for="username">Username</label>
-            <input
-              v-model="user.username"
-              v-validate="'required|min:3|max:20'"
-              type="text"
-              class="form-control"
-              name="username"
-              id="username"
-            />
-            <div
-              v-if="submitted && errors.has('username')"
-              class="alert-danger"
-            >{{errors.first('username')}}</div>
+      <ValidationObserver ref="form" v-slot="{ handleSubmit }">
+        <form @submit.prevent="handleSubmit(onRegister)">
+          <div v-if="!successful">
+            <div class="form-group">
+              <ValidationProvider name="username" rules="required|min:3|max:20" v-slot="{ errors }">
+                <label for="username">Имя пользователя</label>
+                <input
+                  v-model="user.username"
+                  type="text"
+                  class="form-control"
+                  id="username"
+                />
+                <div
+                  v-if="submitted && errors[0]"
+                  class="alert-danger"
+                >{{ errors[0] }}</div>
+              </ValidationProvider>
+            </div>
+            <div class="form-group">
+              <ValidationProvider name="email" rules="email|max:50" v-slot="{ errors }">
+                <label for="email">Email</label>
+                <input
+                  v-model="user.email"
+                  type="email"
+                  class="form-control"
+                  id="email"
+                />
+                <div
+                  v-if="submitted && errors[0]"
+                  class="alert-danger"
+                >{{ errors[0] }}</div>
+              </ValidationProvider>
+            </div>
+            <div class="form-group">
+              <ValidationProvider name="password" rules="required|min:6|max:40" v-slot="{ errors }">
+                <label for="password">Пароль</label>
+                <input
+                  v-model="user.password"
+                  type="password"
+                  class="form-control"
+                  id="password"
+                />
+                <div
+                  v-if="submitted && errors[0]"
+                  class="alert-danger"
+                >{{ errors[0] }}</div>
+              </ValidationProvider>
+            </div>
+            <div class="form-group">
+              <button class="btn btn-primary btn-block">Зарегистрироваться</button>
+            </div>
           </div>
-          <div class="form-group">
-            <label for="email">Email</label>
-            <input
-              v-model="user.email"
-              v-validate="'email|max:50'"
-              type="email"
-              class="form-control"
-              name="email"
-              id="email"
-            />
-            <div
-              v-if="submitted && errors.has('email')"
-              class="alert-danger"
-            >{{errors.first('email')}}</div>
-          </div>
-          <div class="form-group">
-            <label for="password">Password</label>
-            <input
-              v-model="user.password"
-              v-validate="'required|min:6|max:40'"
-              type="password"
-              class="form-control"
-              name="password"
-              id="password"
-            />
-            <div
-              v-if="submitted && errors.has('password')"
-              class="alert-danger"
-            >{{errors.first('password')}}</div>
-          </div>
-          <div class="form-group">
-            <button class="btn btn-primary btn-block">Sign Up</button>
-          </div>
-        </div>
-      </form>
+        </form>
+      </ValidationObserver>
 
       <div
         v-if="message"
@@ -83,7 +86,7 @@ export default {
   },
   computed: {
     loggedIn() {
-      return this.$store.state.auth.status.loggedIn;
+      return this.$store.state.status.loggedIn;
     },
   },
   mounted() {
@@ -92,25 +95,20 @@ export default {
     }
   },
   methods: {
-    handleRegister() {
+    onRegister() {
       this.message = '';
       this.submitted = true;
-      this.$validator.validate().then((isValid) => {
-        if (isValid) {
-          this.$store.dispatch('auth/register', this.user).then(
-            (data) => {
-              this.message = data.message;
-              this.successful = true;
-            },
-            (error) => {
-              this.message = (error.response && error.response.data)
-                || error.message
-                || error.toString();
-              this.successful = false;
-            },
-          );
-        }
-      });
+      this.$store.dispatch('register', this.user).then(
+        (data) => {
+          this.message = data;
+          this.successful = true;
+          this.$router.push('/login');
+        },
+        (error) => {
+          this.$refs.form.setErrors(error);
+          this.successful = false;
+        },
+      );
     },
   },
 };

@@ -494,3 +494,4 @@ test/
 *.iml
 out
 gen
+!/.env

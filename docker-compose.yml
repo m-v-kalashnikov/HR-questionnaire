@@ -43,6 +43,8 @@ services:
     - django-media:/home/app/web/mediafiles
     networks:
       - django-nginx
+    env_file:
+      - ./.env.prod
 
 volumes:
   django-static:

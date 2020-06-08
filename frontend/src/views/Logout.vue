@@ -6,17 +6,19 @@
         src="//ssl.gstatic.com/accounts/ui/avatar_2x.png"
         class="profile-img-card"
         alt=""/>
-      <form name="form" @submit.prevent="logout">
-        <div class="form-group">
-          <label>Вы уверены что хотите выйти?</label>
-        </div>
-        <div class="form-group">
-          <button class="btn btn-danger btn-block" :disabled="loading">
-            <span v-show="loading" class="spinner-border spinner-border-sm"></span>
-            <span>Выйти</span>
-          </button>
-        </div>
-      </form>
+      <ValidationObserver v-slot="{ handleSubmit }">
+        <form name="form" @submit.prevent="handleSubmit(onLogout)">
+          <div class="form-group">
+            <label>Вы уверены что хотите выйти?</label>
+          </div>
+          <div class="form-group">
+            <button class="btn btn-danger btn-block" :disabled="loading">
+              <span v-show="loading" class="spinner-border spinner-border-sm"></span>
+              <span>Выйти</span>
+            </button>
+          </div>
+        </form>
+      </ValidationObserver>
     </div>
   </div>
 </template>
@@ -30,9 +32,9 @@ export default {
     };
   },
   methods: {
-    logout() {
+    onLogout() {
       this.loading = true;
-      this.$store.dispatch('auth/logout');
+      this.$store.dispatch('logout');
       this.$router.push('/');
     },
   },

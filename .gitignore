@@ -223,3 +223,4 @@ pyvenv.cfg
 pip-selfcheck.json
 
 !/backend/backend/scripts/start_prod.sh
+!/frontend/.env

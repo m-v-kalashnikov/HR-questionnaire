@@ -1,6 +1,11 @@
 import 'bootstrap';
 import 'bootstrap/dist/css/bootstrap.min.css';
-import VeeValidate from 'vee-validate';
+import {
+  ValidationObserver,
+  ValidationProvider,
+  extend,
+} from 'vee-validate';
+import * as rules from 'vee-validate/dist/rules';
 import { library } from '@fortawesome/fontawesome-svg-core';
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
 import {
@@ -10,6 +15,7 @@ import {
   faSignInAlt,
   faSignOutAlt,
   faQuestionCircle,
+  faUserCog,
 } from '@fortawesome/free-solid-svg-icons';
 import Vue from 'vue';
 import Axios from 'axios';
@@ -19,11 +25,16 @@ import store from './store';
 
 Vue.prototype.$http = Axios;
 
-library.add(faHome, faUser, faUserPlus, faSignInAlt, faSignOutAlt, faQuestionCircle);
+library.add(faHome, faUser, faUserPlus, faSignInAlt, faSignOutAlt, faQuestionCircle, faUserCog);
 
 Vue.config.productionTip = false;
 
-Vue.use(VeeValidate);
+Object.keys(rules).forEach((rule) => {
+  extend(rule, rules[rule]);
+});
+
+Vue.component('ValidationObserver', ValidationObserver);
+Vue.component('ValidationProvider', ValidationProvider);
 Vue.component('font-awesome-icon', FontAwesomeIcon);
 
 new Vue({

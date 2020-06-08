@@ -19,9 +19,11 @@ from django.conf import settings
 from django.conf.urls.static import static
 from django.contrib import admin
 from django.urls import path, include
+from accounts.views import CustomTokenObtainPairView
 
 urlpatterns = [
     path('api/accounts/', include('accounts.urls', namespace="accounts")),
+    path('auth/jwt/token/', CustomTokenObtainPairView.as_view(), name='custom_token_obtain_pair'),
     path('auth/', include('djoser.urls')),
     path('auth/', include('djoser.urls.jwt')),
     path('api/{}/'.format(os.getenv('ADMIN_PANEL_URL')), admin.site.urls),
