@@ -1,7 +1,7 @@
 <template>
   <div id="app">
     <nav class="navbar navbar-expand navbar-dark bg-dark">
-      <a href class="navbar-brand" @click.prevent>Есть вопросы?</a>
+      <a href class="navbar-brand text-vue" @click.prevent>Questions?</a>
       <ul class="navbar-nav mr-auto">
         <li class="nav-item">
           <router-link to="/" class="nav-link">
@@ -84,7 +84,13 @@ export default {
 svg {
   margin: 0px 5px;
 }
-  .navbar-dark{
-    background: #2c3e50 !important;
-  }
+.navbar-dark {
+  background: #2c3e50 !important;
+}
+
+.text-vue {
+  color: #42b983 !important;
+  font-family: 'Lobster', cursive;
+  font-size: x-large;
+}
 </style>

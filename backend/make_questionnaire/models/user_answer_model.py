@@ -1,9 +1,9 @@
 from django.db import models
-from django.contrib.auth.models import User
+from accounts.models import UserProfile
 
 
 class UserAnswer(models.Model):
-    user = models.ForeignKey(User,
+    user_profile = models.ForeignKey(UserProfile,
                              related_name='user_answer',
                              on_delete=models.SET_NULL,
                              null=True
@@ -26,10 +26,10 @@ class UserAnswer(models.Model):
         verbose_name_plural = 'Ответы пользователей'
 
     def __str__(self):
-        answer = self.answer
-        user = self.user
+        answer = self.id
+        user = self.user_profile
         question_in_questionnaire = self.question_in_questionnaire
-        return '{answer} пользователя {user} на {question_in_questionnaire}'.format(
+        return 'Ответ({answer}) пользователя ({user}) на {question_in_questionnaire}'.format(
             answer=answer,
             user=user,
             question_in_questionnaire=question_in_questionnaire
