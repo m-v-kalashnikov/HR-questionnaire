@@ -1,14 +1,14 @@
 <template>
   <div id="app">
     <nav class="navbar navbar-expand navbar-dark bg-dark">
-      <a href class="navbar-brand text-vue" @click.prevent>Questions?</a>
+      <a href class="navbar-brand text-vue-x-large" @click.prevent>anyQuestions?</a>
       <ul class="navbar-nav mr-auto">
         <li class="nav-item">
           <router-link to="/" class="nav-link">
             <font-awesome-icon icon="home" />Главная
           </router-link>
         </li>
-        <li class="nav-item">
+        <li v-if="currentUser" class="nav-item">
           <router-link to="/questionnaire" class="nav-link">
             <font-awesome-icon icon="question-circle" />Опросники
           </router-link>
@@ -88,9 +88,29 @@ svg {
   background: #2c3e50 !important;
 }
 
-.text-vue {
+.text-vue-x-large {
   color: #42b983 !important;
   font-family: 'Lobster', cursive;
   font-size: x-large;
+}
+
+.text-vue {
+  color: #42b983 !important;
+}
+
+.text-vue-dark {
+  color: #2c3e50 !important;
+}
+
+.bg-vue {
+  background: #42b983 !important;
+}
+
+.bg-vue-dark {
+  background: #2c3e50 !important;
+}
+
+.font-vue {
+  font-family: 'Lobster', cursive;
 }
 </style>

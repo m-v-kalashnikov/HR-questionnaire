@@ -83,12 +83,7 @@ export default {
       if (this.user.username && this.user.password) {
         this.$store.dispatch('login', this.user).then(
           () => {
-            if (localStorage.getItem('next')) {
-              this.$router.push(localStorage.getItem('next'));
-              localStorage.removeItem('next');
-            } else {
-              this.$router.push('/profile');
-            }
+            this.$router.push('/profile');
           },
           (error) => {
             this.loading = false;
