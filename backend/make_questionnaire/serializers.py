@@ -23,41 +23,49 @@ class AnswerSerializer(serializers.HyperlinkedModelSerializer):
     url = serializers.HyperlinkedIdentityField(
         view_name='make_questionnaire_app:answer-detail',
     )
-    question = serializers.StringRelatedField(read_only=True)  # TODO: make it serializer
 
     class Meta:
         model = Answer
-        fields = ['url', 'title', 'question', 'correct']
-
-
-class QuestionInQuestionnaireSerializer(serializers.HyperlinkedModelSerializer):
-    url = serializers.HyperlinkedIdentityField(
-        view_name='make_questionnaire_app:question_in_questionnaire-detail',
-    #     lookup_field='id'
-    )
-    question = serializers.StringRelatedField(read_only=True) # TODO: make it serializer
-    questionnaire = serializers.StringRelatedField(read_only=True) # TODO: make it serializer
-
-    class Meta:
-        model = QuestionInQuestionnaire
-        fields = ['url', 'question', 'questionnaire', 'value']
+        fields = ['url', 'title', 'correct']
 
 
 class QuestionSerializer(serializers.HyperlinkedModelSerializer):
     url = serializers.HyperlinkedIdentityField(
         view_name='make_questionnaire_app:question-detail',
     )
+    answer = AnswerSerializer(many=True)
 
     class Meta:
         model = Question
-        fields = ['url', 'title', 'image']
+        fields = ['url', 'title', 'image', 'answer']
+
+    def create(self, validated_data):
+        answer_validated_data = validated_data.pop('answer')
+        question = Question.objects.create(**validated_data)
+        answer_serializer = self.fields['answer']
+        for each in answer_validated_data:
+            each['question'] = question
+        answers = answer_serializer.create(answer_validated_data)
+        return question
+
+
+class QuestionInQuestionnaireSerializer(serializers.HyperlinkedModelSerializer):
+    url = serializers.HyperlinkedIdentityField(
+        view_name='make_questionnaire_app:question_in_questionnaire-detail',
+    )
+    question = QuestionSerializer()
+    questionnaire = QuestionnaireSerializer(read_only=True)
+
+    class Meta:
+        model = QuestionInQuestionnaire
+        fields = ['url', 'question', 'questionnaire', 'value']
 
 
 class UserAnswerSerializer(serializers.ModelSerializer):
     url = serializers.HyperlinkedIdentityField(
         view_name='make_questionnaire_app:user_answer-detail',
     )
-    question_in_questionnaire = serializers.StringRelatedField(read_only=True)
+    question_in_questionnaire = QuestionInQuestionnaireSerializer(many=True, read_only=True)
 
     class Meta:
         model = UserAnswer
