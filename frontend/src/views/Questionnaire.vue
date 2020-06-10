@@ -18,7 +18,8 @@
         :title="questionnaire.title"
         >
         <b-card-text>{{ questionnaire.description }}</b-card-text>
-        <b-card-text>{{ questionnaire.questionnaire_type }}</b-card-text>
+        <b-card-text v-if="questionnaire.questionnaire_type === 'TS'">Тесты</b-card-text>
+        <b-card-text v-else>Опросник</b-card-text>
         <b-button
           class="btn btn-block"
           href="#"

@@ -12,11 +12,11 @@ class QuestionnaireSerializer(serializers.HyperlinkedModelSerializer):
         view_name='make_questionnaire_app:questionnaire-detail',
         lookup_field='slug'
     )
-    questionnaire_type = serializers.CharField(source='get_questionnaire_type_display')
+    questionnaire_type = serializers.CharField()
 
     class Meta:
         model = Questionnaire
-        fields = ['url', 'title', 'questionnaire_type', 'description']
+        fields = ['url', 'slug', 'title', 'questionnaire_type', 'description']
 
 
 class AnswerSerializer(serializers.HyperlinkedModelSerializer):
