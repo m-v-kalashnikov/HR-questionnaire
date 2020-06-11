@@ -6,13 +6,16 @@ import AuthService from '../services/auth.service';
 Vue.use(Vuex);
 
 const user = JSON.parse(localStorage.getItem('user'));
+
 const initialState = user
   ? { status: { loggedIn: true }, user }
   : { status: { loggedIn: false }, user: null };
+const QuestionnaireState = null;
 
 export default new Vuex.Store({
   namespaced: true,
   state: initialState,
+  QuestionnaireState,
   actions: {
     // eslint-disable-next-line no-shadow
     login({ commit }, user) {
@@ -62,6 +65,26 @@ export default new Vuex.Store({
           commit('beManager');
         });
     },
+    // eslint-disable-next-line no-shadow
+    questionnaire({ commit }, questionnaire) {
+      return axios
+        .post('api/questionnaire/', {
+          title: questionnaire.title,
+          questionnaire_type: questionnaire.questionnaire_type,
+          description: questionnaire.description,
+        }, {
+          headers: {
+            Authorization: `Bearer ${this.state.user.access}`,
+          },
+        })
+        .then((response) => {
+          if (response.status >= 200 && response.status < 400) {
+            commit('questionnaireSuccess', questionnaire);
+            return Promise.resolve(`Опросник ${response.data.title} создан!`);
+          }
+          return Promise.reject(response.data);
+        });
+    },
   },
   mutations: {
     // eslint-disable-next-line no-shadow
@@ -85,6 +108,10 @@ export default new Vuex.Store({
     },
     beManager(state) {
       state.user.want_to_be_manager = true;
+    },
+    // eslint-disable-next-line no-shadow
+    questionnaireSuccess(state, questionnaire) {
+      state.questionnaire = questionnaire;
     },
   },
   // modules: {

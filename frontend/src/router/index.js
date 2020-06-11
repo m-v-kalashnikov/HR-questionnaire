@@ -40,7 +40,7 @@ const routes = [
     component: () => import(/* webpackChunkName: "Profile" */ '../views/Profile.vue'),
   },
   {
-    path: '/create/questionnairee',
+    path: '/create/questionnaire',
     name: 'CreateQuestionnaire',
     component: () => import(/* webpackChunkName: "CreateQuestionnaire" */ '../views/CreateQuestionnaire.vue'),
   },

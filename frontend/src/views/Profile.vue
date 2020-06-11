@@ -13,8 +13,7 @@
              href @click.prevent>
             Запрос на рассмотрении
           </a>
-          <a v-else-if="currentUser.want_to_be_manager === true
-          && currentUser.is_manager === true"
+          <a v-else-if="currentUser.is_manager === true"
              class="btn btn-info btn-block"
              href @click.prevent>
             Вы менеджер

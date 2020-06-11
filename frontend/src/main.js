@@ -16,6 +16,17 @@ import {
   faSignOutAlt,
   faQuestionCircle,
   faUserCog,
+  faBold,
+  faItalic,
+  faStrikethrough,
+  faUnderline,
+  faCode,
+  faParagraph,
+  faListUl,
+  faListOl,
+  faQuoteRight,
+  faUndo,
+  faRedo,
 } from '@fortawesome/free-solid-svg-icons';
 import Vue from 'vue';
 import './plugins/bootstrap-vue';
@@ -26,7 +37,9 @@ import store from './store';
 
 Vue.prototype.$http = Axios;
 
-library.add(faHome, faUser, faUserPlus, faSignInAlt, faSignOutAlt, faQuestionCircle, faUserCog);
+library.add(faHome, faUser, faUserPlus, faSignInAlt, faSignOutAlt, faQuestionCircle, faUserCog,
+  faBold, faItalic, faStrikethrough, faUnderline, faCode, faParagraph, faListUl, faListOl,
+  faQuoteRight, faUndo, faRedo);
 
 Vue.config.productionTip = false;
 

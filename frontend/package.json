@@ -17,6 +17,8 @@
     "core-js": "^3.6.5",
     "jquery": "^3.5.1",
     "popper.js": "^1.16.1",
+    "tiptap": "^1.27.1",
+    "tiptap-extensions": "^1.29.1",
     "vee-validate": "^3.3.2",
     "vue": "^2.6.11",
     "vue-router": "^3.3.2",
