@@ -16,7 +16,7 @@ class QuestionnaireSerializer(serializers.HyperlinkedModelSerializer):
 
     class Meta:
         model = Questionnaire
-        fields = ['url', 'slug', 'title', 'questionnaire_type', 'description']
+        fields = ['url', 'slug', 'title', 'when_to_start', 'questionnaire_type', 'description']
 
 
 class AnswerSerializer(serializers.HyperlinkedModelSerializer):
@@ -33,7 +33,7 @@ class QuestionSerializer(serializers.HyperlinkedModelSerializer):
     url = serializers.HyperlinkedIdentityField(
         view_name='make_questionnaire_app:question-detail',
     )
-    answer = AnswerSerializer(many=True)
+    answer = AnswerSerializer(many=True, allow_null=True)
 
     class Meta:
         model = Question
@@ -54,14 +54,23 @@ class QuestionInQuestionnaireSerializer(serializers.HyperlinkedModelSerializer):
         view_name='make_questionnaire_app:question_in_questionnaire-detail',
     )
     question = QuestionSerializer()
-    questionnaire = QuestionnaireSerializer(read_only=True)
+    questionnaire = QuestionnaireSerializer()
 
     class Meta:
         model = QuestionInQuestionnaire
         fields = ['url', 'question', 'questionnaire', 'value']
 
+    def create(self, validated_data):
+        questionnaire_validated_data = validated_data.pop('questionnaire')
+        question_validated_data = validated_data.pop('question')
+        questionnaire = Questionnaire.objects.get(**questionnaire_validated_data)
+        question_serializer = self.fields['question']
+        question = question_serializer.create(question_validated_data)
+        question_in_questionnaire = QuestionInQuestionnaire.objects.create(question=question, questionnaire=questionnaire, **validated_data)
+        return question_in_questionnaire
 
-class UserAnswerSerializer(serializers.ModelSerializer):
+
+class UserAnswerSerializer(serializers.HyperlinkedModelSerializer):
     url = serializers.HyperlinkedIdentityField(
         view_name='make_questionnaire_app:user_answer-detail',
     )
@@ -69,7 +78,4 @@ class UserAnswerSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = UserAnswer
-        fields = ['url', 'user_profile', 'question_in_questionnaire', 'answer']
-
-
-
+        fields = ['url', 'user_profile', 'string_answer', 'question_in_questionnaire', 'answer']

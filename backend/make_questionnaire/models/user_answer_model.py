@@ -17,6 +17,7 @@ class UserAnswer(models.Model):
                                     related_name='user_answer',
                                     blank=True
                                     )
+    string_answer = models.TextField('Ответ', blank=True, null=True)
 
     created_at = models.DateTimeField(auto_now_add=True, null=True)
     updated_at = models.DateTimeField(auto_now=True, null=True)

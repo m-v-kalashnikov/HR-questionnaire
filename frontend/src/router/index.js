@@ -20,6 +20,12 @@ const routes = [
     component: () => import(/* webpackChunkName: "Questionnaire" */ '../views/Questionnaire.vue'),
   },
   {
+    path: '/questionnaire/:questionnaireSlug/details',
+    name: 'QuestionnaireDetail',
+    props: true,
+    component: () => import(/* webpackChunkName: "QuestionnaireDetail" */ '../views/QuestionnaireDetail.vue'),
+  },
+  {
     path: '/login',
     name: 'Login',
     component: () => import(/* webpackChunkName: "Login" */ '../views/Login.vue'),
@@ -38,11 +44,6 @@ const routes = [
     path: '/profile',
     name: 'Profile',
     component: () => import(/* webpackChunkName: "Profile" */ '../views/Profile.vue'),
-  },
-  {
-    path: '/create/questionnaire',
-    name: 'CreateQuestionnaire',
-    component: () => import(/* webpackChunkName: "CreateQuestionnaire" */ '../views/CreateQuestionnaire.vue'),
   },
 ];
 

@@ -72,6 +72,7 @@ export default new Vuex.Store({
           title: questionnaire.title,
           questionnaire_type: questionnaire.questionnaire_type,
           description: questionnaire.description,
+          when_to_start: questionnaire.when_to_start,
         }, {
           headers: {
             Authorization: `Bearer ${this.state.user.access}`,
@@ -79,7 +80,35 @@ export default new Vuex.Store({
         })
         .then((response) => {
           if (response.status >= 200 && response.status < 400) {
-            commit('questionnaireSuccess', questionnaire);
+            localStorage.setItem('questionnaire', JSON.stringify(response.data));
+            commit('questionnaireSuccess', response.data);
+            return Promise.resolve(response.data);
+          }
+          return Promise.reject(response.data);
+        });
+    },
+    question(form, postQuestionnaire) {
+      return axios
+        .post('api/question/', {
+          title: form.question.title,
+          image: form.question.image,
+          answer: form.question.answer,
+        }, {
+          headers: {
+            Authorization: `Bearer ${this.state.user.access}`,
+          },
+        })
+        .then((response) => {
+          if (response.status >= 200 && response.status < 400) {
+            axios.post('api/question-in-questionnaire/', {
+              value: form.question.value,
+              question: response.data,
+              questionnaire: postQuestionnaire,
+            }, {
+              headers: {
+                Authorization: `Bearer ${this.state.user.access}`,
+              },
+            });
             return Promise.resolve(`Опросник ${response.data.title} создан!`);
           }
           return Promise.reject(response.data);

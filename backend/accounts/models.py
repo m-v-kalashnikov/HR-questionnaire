@@ -7,7 +7,6 @@ class UserProfile(models.Model):
     description = models.TextField('Описание', blank=True, null=True)
     created_at = models.DateTimeField('Дата создания', auto_now_add=True)
     updated_at = models.DateTimeField('Дата модификации', auto_now=True)
-    is_manager = models.BooleanField('Менеджер', default=False)
     want_to_be_manager = models.BooleanField('Хочет быть менеджером', default=False)
 
     class Meta:
@@ -16,6 +15,3 @@ class UserProfile(models.Model):
 
     def __str__(self):
         return self.user.username
-
-    def IsManager(self):
-        return self.is_manager

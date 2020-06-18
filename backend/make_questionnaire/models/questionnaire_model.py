@@ -1,8 +1,11 @@
+import datetime
 import itertools
 from django.db import models
+from django.utils import timezone
 from django.utils.text import slugify
 from googletrans import Translator
 from django.utils.translation import gettext_lazy as _
+from tinymce.models import HTMLField
 
 
 class Questionnaire(models.Model):
@@ -16,9 +19,10 @@ class Questionnaire(models.Model):
                                           choices=QuestionnaireType.choices,
                                           default=QuestionnaireType.QUESTIONS,
                                           )
-    description = models.CharField('Описание', max_length=512, null=True)
-    created_at = models.DateTimeField(auto_now_add=True, null=True)
-    updated_at = models.DateTimeField(auto_now=True, null=True)
+    when_to_start = models.DateTimeField('Когда можно проходить', null=True)
+    description = HTMLField('Описание', null=True)
+    created_at = models.DateTimeField('Создано', auto_now_add=True, null=True)
+    updated_at = models.DateTimeField('Обновлено', auto_now=True, null=True)
     slug = models.SlugField(default='',
                             editable=False,
                             max_length=256,
@@ -46,3 +50,10 @@ class Questionnaire(models.Model):
             self._generate_slug()
 
         super().save(*args, **kwargs)
+
+    def was_published_recently(self):
+        return self.created_at >= timezone.now() - datetime.timedelta(days=1)
+
+    was_published_recently.admin_order_field = 'created_at'
+    was_published_recently.boolean = True
+    was_published_recently.short_description = 'Было ли создано недавно?'

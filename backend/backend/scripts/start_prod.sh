@@ -13,6 +13,7 @@ fi
 
 python3 manage.py makemigrations
 python3 manage.py migrate --no-input
+python3 manage.py loaddata db.json
 python3 manage.py collectstatic --no-input --clear
 echo "from django.contrib.auth.models import User; User.objects.create_superuser('$ADMIN_USER', '$ADMIN_MAIL', '$ADMIN_PASSWORD', first_name='$ADMIN_FIRST_NAME', last_name='$ADMIN_LAST_NAME')" | python3 manage.py shell
 gunicorn backend.wsgi -b 0.0.0.0:8000

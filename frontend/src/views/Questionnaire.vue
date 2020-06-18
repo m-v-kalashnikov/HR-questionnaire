@@ -3,10 +3,10 @@
     <div v-if="currentUserIsManager">
       <b-button class="btn-block btn-warning mb-3"
                 id="show-btn"
-                @click="$bvModal.show('bv-modal-example')">
+                @click="$bvModal.show('bv-modal-questionnaire')">
         Создать опрос
       </b-button>
-      <b-modal id="bv-modal-example" hide-footer>
+      <b-modal size="xl" id="bv-modal-questionnaire" hide-footer>
         <b-row>
           <b-col>
             <div role="group" class="mb-3">
@@ -27,7 +27,26 @@
         </b-row>
         <b-row>
           <b-col>
-            <b-form-group label="Вид отроса:">
+            <div>
+              <label for="datepicker">Выберите с какой даты можно будет проходить этот опрос</label>
+              <b-form-datepicker id="datepicker"
+                                 v-model="whenToStart"
+                                 value-as-date='true'
+                                 :state="datePickerState"
+                                 :date-format-options="{
+                                   year: 'numeric',
+                                   month: 'numeric',
+                                   day: 'numeric'
+                                 }"
+                                 class="mb-2">
+
+              </b-form-datepicker>
+            </div>
+          </b-col>
+        </b-row>
+        <b-row>
+          <b-col>
+            <b-form-group label="Вид опроса:">
               <b-form-radio-group
                 class="btn-block"
                 id="questionnaire_type"
@@ -188,11 +207,9 @@
 
                 </div>
               </editor-menu-bar>
-              <div class="">
-                <editor-content
-                  class="editor__content rounded border-dark fa-border bg-light"
-                  :editor="editor" />
-              </div>
+              <editor-content
+                class="editor__content rounded border-dark fa-border bg-light"
+                :editor="editor" />
             </div>
           </b-col>
         </b-row>
@@ -218,9 +235,9 @@
               </div>
               <b-button
                 class="btn btn-block mt-auto"
-                href="#"
+                :href="`/questionnaire/${questionnaire.slug}/details`"
                 variant="warning">
-                Начать прохождение
+                К опроснику
               </b-button>
             </div>
           </div>
@@ -260,10 +277,12 @@ export default {
   },
   data() {
     return {
-      questionnaire: new Questionnaire('', '', ''),
+      hideStatus: false,
+      questionnaire: new Questionnaire('', '', '', ''),
       questionnaires: [],
       loading: false,
       massage: '',
+      whenToStart: '',
       editor: new Editor({
         extensions: [
           new Blockquote(),
@@ -311,6 +330,9 @@ export default {
     nameState() {
       return this.name.length > 2;
     },
+    datePickerState() {
+      return this.whenToStart !== '';
+    },
   },
   methods: {
     fetchQuestionnaires() {
@@ -326,31 +348,28 @@ export default {
       this.questionnaire.title = this.name;
       this.questionnaire.questionnaire_type = this.selected;
       this.questionnaire.description = this.html;
+      this.questionnaire.when_to_start = this.whenToStart;
       this.onCreateQuestionnaire(this.questionnaire);
+      this.name = '';
+      this.whenToStart = '';
+      this.html = '<p>Напиши <strong>тут </strong>описание...</p>';
+      this.selected = 'TS';
     },
     onCreateQuestionnaire(questionnaire) {
       if (questionnaire.title
         && questionnaire.questionnaire_type
         && questionnaire.description
+        && questionnaire.when_to_start
       ) {
-        // this.loading = true;
-        // this.$http
-        //   .post('api/questionnaire/', {
-        //     title: questionnaire.title,
-        //     questionnaire_type: questionnaire.questionnaire_type,
-        //     description: questionnaire.description,
-        //   }, {
-        //     headers: authHeader(),
-        //   })
-        //   .then((response) => {
-        //     // eslint-disable-next-line no-console
-        //     console.log(response.data);
-        //     localStorage.setItem('questionnaire', response.data);
-        //     this.$router.push('/create/questionnaire');
-        //   });
+        this.$bvModal.hide('bv-modal-questionnaire');
         this.$store.dispatch('questionnaire', this.questionnaire).then(
-          () => {
-            this.$router.push('/create/questionnaire');
+          (response) => {
+            this.$router.push({
+              name: 'QuestionnaireDetail',
+              params: { questionnaireSlug: `${response.slug}` },
+            });
+            // eslint-disable-next-line no-console
+            console.log(response);
           },
           (error) => {
             this.loading = false;
