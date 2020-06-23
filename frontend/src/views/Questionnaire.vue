@@ -325,7 +325,7 @@ export default {
   },
   computed: {
     currentUserIsManager() {
-      return this.$store.state.user.is_manager;
+      return this.$store.state.user.data.is_staff;
     },
     nameState() {
       return this.name.length > 2;

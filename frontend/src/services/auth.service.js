@@ -6,7 +6,7 @@ class AuthService {
   // eslint-disable-next-line class-methods-use-this
   login(user) {
     return axios
-      .post(`${API_URL}jwt/token/`, {
+      .post(`${API_URL}jwt/create/`, {
         username: user.username,
         password: user.password,
       })

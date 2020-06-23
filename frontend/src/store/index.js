@@ -51,6 +51,19 @@ export default new Vuex.Store({
           },
         );
     },
+    currentUser({ commit }) {
+      axios.get('api/accounts/current_user_info/', {
+        headers: {
+          Authorization: `Bearer ${this.state.user.access}`,
+        },
+      })
+        .then((response) => {
+          commit('currentUser', response.data);
+        })
+        .then(() => {
+          localStorage.setItem('user', JSON.stringify(this.state.user));
+        });
+    },
     beManager({ commit }) {
       axios.put(`api/accounts/profile/${this.state.user.id}/`, {
         want_to_be_manager: true,
@@ -141,6 +154,9 @@ export default new Vuex.Store({
     // eslint-disable-next-line no-shadow
     questionnaireSuccess(state, questionnaire) {
       state.questionnaire = questionnaire;
+    },
+    currentUser(state, data) {
+      state.user.data = data;
     },
   },
   // modules: {

@@ -27,17 +27,19 @@
         </li>
       </ul>
       <ul v-if="currentUser" class="navbar-nav ml-auto">
-        <li v-if="currentUser.is_superuser" class="nav-item">
-          <a class="nav-link" href @click.prevent="toAdmin">
-            <font-awesome-icon icon="user-cog" />В админ панель
-          </a>
-        </li>
-        <li class="nav-item">
-          <router-link to="/profile" class="nav-link">
-            <font-awesome-icon icon="user" />
-            <span class="text-capitalize">{{ currentUser.username }}</span>
-          </router-link>
-        </li>
+        <div v-if="currentUser.data">
+          <li v-if="currentUser.data.is_superuser" class="nav-item">
+            <a class="nav-link" href @click.prevent="toAdmin">
+              <font-awesome-icon icon="user-cog" />В админ панель
+            </a>
+          </li>
+          <li class="nav-item">
+            <router-link to="/profile" class="nav-link">
+              <font-awesome-icon icon="user" />
+              <span class="text-capitalize">{{ currentUser.data.username }}</span>
+            </router-link>
+          </li>
+        </div>
         <li class="nav-item">
           <router-link to="/logout" class="nav-link">
             <font-awesome-icon icon="sign-out-alt" />Выйти

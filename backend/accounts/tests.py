@@ -56,8 +56,8 @@ class userProfileTestCase(APITestCase):
         print('_________________')
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
-        profile_data = {'description': 'I am a very famous game character', 'location': 'nintendo world',
-                        'is_manager': 'true', }
+        profile_data = {'description': 'I am a very famous game character',
+                        'want_to_be_manager': 'true', }
         response = self.client.put(self.profile_detail_url, data=profile_data)
         print('')
         print('accounts: test 2.3')
