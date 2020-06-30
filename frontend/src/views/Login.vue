@@ -1,12 +1,12 @@
 <template>
   <div class="login-view">
     <b-card
-      title="Login"
+      title="Вход"
     >
     <b-form @submit="onSubmit" @reset="onReset" class="login-form">
       <b-form-group
         id="input-group-1"
-        label="User name:"
+        label="Имя пользователя:"
         label-for="input-1"
       >
         <b-form-input
@@ -14,25 +14,25 @@
           v-model="form.username"
           type="text"
           required
-          placeholder="Enter user name"
+          placeholder="Введите имя пользователя"
         ></b-form-input>
       </b-form-group>
 
-      <b-form-group id="input-group-2" label="Your password:" label-for="input-2">
+      <b-form-group id="input-group-2" label="Ваш пароль:" label-for="input-2">
         <b-form-input
           id="input-2"
           v-model="form.password"
           type="password"
           required
-          placeholder="Enter password"
+          placeholder="Введите пароль"
         ></b-form-input>
       </b-form-group>
       <div class="d-flex justify-content-center">
         <b-button class="mr-3" type="submit" variant="primary" :disabled="loading">
           <b-spinner label="Spinning" variable="success" v-if="loading" class="mr-3"></b-spinner>
-          Login
+          Войти
         </b-button>
-        <b-button type="reset" variant="danger">Reset</b-button>
+        <b-button type="reset" variant="danger">Очистить</b-button>
       </div>
     </b-form>
     <b-list-group class="mt-3" v-show="error">
@@ -46,8 +46,8 @@
       </b-list-group>
     </b-card>
     <div class="mt-4">
-      <router-link to="/register">Create Account</router-link>|
-      <router-link to="/password_reset">Reset Password</router-link>
+      <router-link to="/register">Создать аккаунт</router-link> |
+      <router-link to="/password_reset">Сменить пароль</router-link>
     </div>
   </div>
 </template>

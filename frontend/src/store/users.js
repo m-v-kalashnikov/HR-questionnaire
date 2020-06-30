@@ -1,5 +1,10 @@
 import users from '../api/users';
-import { LOADING_START, SET_DATA, LOADING_SUCCESS, LOADING_FAILURE } from './types';
+import {
+  LOADING_START,
+  SET_DATA,
+  LOADING_SUCCESS,
+  LOADING_FAILURE,
+} from './types';
 
 const initialState = {
   loading: false,

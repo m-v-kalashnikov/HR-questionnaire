@@ -10,14 +10,15 @@
         <b-collapse id="nav-collapse" is-nav>
           <!-- Right aligned nav items -->
           <b-navbar-nav class="ml-auto">
+            <!-- TODO: change to admin questionnaire creation -->
             <b-nav-item to="/users" class="mr-5" v-if="isSuperUser">Users</b-nav-item>
             <b-nav-item-dropdown right>
               <!-- Using 'button-content' slot -->
               <template v-slot:button-content>
                 <img src="../assets/avatar.jpg" height="30" class="avatar" />
               </template>
-              <b-dropdown-item to="/profile">Profile</b-dropdown-item>
-              <b-dropdown-item to="/logout">Sign Out</b-dropdown-item>
+              <b-dropdown-item to="/profile">Профиль</b-dropdown-item>
+              <b-dropdown-item to="/logout">Выйти</b-dropdown-item>
             </b-nav-item-dropdown>
           </b-navbar-nav>
         </b-collapse>

@@ -12,6 +12,9 @@ import {
   LOADING_SUCCESS,
   SET_USER_DATA,
   SET_USER_ROLE,
+  ASK_FOR_MANAGER_START,
+  ASK_FOR_MANAGER_SUCCESS,
+  ASK_FOR_MANAGER_FAILURE,
 } from './types';
 
 const TOKEN_STORAGE_KEY = 'TOKEN_STORAGE_KEY';
@@ -24,12 +27,18 @@ const initialState = {
   token: null,
   userData: null,
   isSuperUser: null,
+  isStaff: null,
+  wantToBeAManager: null,
   errorMsg: '',
+  askForManagerError: null,
+  askForManagerLoading: null,
 };
 
 const getters = {
   isAuthenticated: state => !!state.token,
   isSuperUser: state => state.isSuperUser,
+  isStaff: state => state.isStaff,
+  wantToBeAManager: state => state.wantToBeAManager,
 };
 
 const actions = {
@@ -49,8 +58,7 @@ const actions = {
   getUserRole({ commit }) {
     return auth.getFullUserInfo()
       .then(({ data }) => {
-        console.log(data);
-        commit(SET_USER_ROLE, data.is_superuser);
+        commit(SET_USER_ROLE, data);
       }).catch(() => {});
   },
   getAccountDetails({ commit }) {
@@ -65,7 +73,6 @@ const actions = {
       auth.updateAccountDetails(data)
         .then(() => resolve(true))
         .catch((err) => {
-          console.log(err.response.data.detail);
           commit(LOADING_FAILURE, err.response.data.detail);
           return resolve(false);
         });
@@ -86,6 +93,20 @@ const actions = {
     if (!isProduction && token) {
       commit(SET_TOKEN, token);
     }
+  },
+  askForBecomingAManager({ commit }, id) {
+    commit(ASK_FOR_MANAGER_START);
+    return new Promise((resolve) => {
+      auth.askForBecomingAManager(id, { want_to_be_manager: true })
+        .then(() => {
+          commit(ASK_FOR_MANAGER_SUCCESS);
+          return resolve(true);
+        })
+        .catch((err) => {
+          commit(ASK_FOR_MANAGER_FAILURE, err.response.data.detail);
+          return resolve(false);
+        });
+    });
   },
 };
 
@@ -144,7 +165,24 @@ const mutations = {
     state.userData = data;
   },
   [SET_USER_ROLE](state, data) {
-    state.isSuperUser = data;
+    state.isSuperUser = data.is_superuser;
+    state.isStaff = data.is_staff;
+    state.wantToBeAManager = data.want_to_be_manager;
+  },
+  [ASK_FOR_MANAGER_START](state) {
+    state.askForManagerLoading = true;
+    state.askForManagerError = false;
+    state.errorMsg = '';
+  },
+  [ASK_FOR_MANAGER_FAILURE](state, errorMsg = '') {
+    state.askForManagerLoading = false;
+    state.askForManagerError = true;
+    state.errorMsg = errorMsg;
+  },
+  [ASK_FOR_MANAGER_SUCCESS](state) {
+    state.askForManagerLoading = false;
+    state.askForManagerError = false;
+    state.wantToBeAManager = true;
   },
 };
 

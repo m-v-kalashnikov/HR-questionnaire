@@ -1,12 +1,12 @@
 <template>
   <div id="activate-account-view">
-    <h1>Verify Email</h1>
-    <template v-if="activationLoading">loading...</template>
-    <template v-else-if="activationError">An error occured.</template>
+    <h1>Подтвердить Email</h1>
+    <template v-if="activationLoading">Загрузка...</template>
+    <template v-else-if="activationError">Что-то пошло не так.</template>
     <template v-else-if="activationCompleted">
-      Account activation successful.
+      Аккаунт активирован.
       <router-link v-if="!isAuthenticated" to="/login">
-        Click here to sign in.
+        Нажмите для входа.
       </router-link>
     </template>
   </div>
@@ -20,6 +20,7 @@ import {
 } from 'vuex';
 
 export default {
+  title: 'Подтверждение Email | anyQuestions?',
   computed: {
     ...mapGetters('auth', ['isAuthenticated']),
     ...mapState('signup', [

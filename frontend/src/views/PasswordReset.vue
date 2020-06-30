@@ -3,12 +3,12 @@
   <div class="password-reset-view">
     <template v-if="!emailCompleted">
       <b-card
-        title="Password Reset"
+        title="Смена пароля"
       >
       <b-form @submit="onSubmit" @reset="onReset" class="reset-form">
         <b-form-group
           id="input-group-4"
-          label="Email address:"
+          label="Ваш email:"
           label-for="input-4"
         >
           <b-form-input
@@ -16,33 +16,34 @@
             v-model="form.email"
             type="email"
             required
-            placeholder="Enter user email"
+            placeholder="Введите email"
           ></b-form-input>
         </b-form-group>
         <div class="d-flex justify-content-center">
           <b-button class="mr-3" type="submit" variant="primary" :disabled="emailLoading">
             <b-spinner label="Spinning" variable="success" v-if="emailLoading" class="mr-3"></b-spinner>
-            Send Email
+            Отправить Email
           </b-button>
-          <b-button type="reset" variant="danger">Reset</b-button>
+          <b-button type="reset" variant="danger">Очистить</b-button>
         </div>
-        <b-badge href="#" variant="danger" v-show="emailError">
-          An error occured while processing your reddddquest.
-        </b-badge>
+        <b-row class="mt-3 justify-content-center">
+          <b-badge href="#" variant="danger" v-show="emailError">
+            Что-то... Где-то... Как-то... пошло не так.
+          </b-badge>
+        </b-row>
       </b-form>
       </b-card>
       <div class="mt-4">
-        Return to Login page
-        <router-link to="/login">Login</router-link>
+        Вернуться на страницу
+        <router-link to="/login">входа</router-link>
       </div>
     </template>
     <template v-else>
       <div>
-        Check your inbox for a link to reset your password. If an email doesn't appear within a few
-        minutes, check your spam folder.
+        Проверьте вашу почту, мы выслали вам ссылку для смены пароля. Если письма нет проверьте папку спама.
       </div>
       <div>
-        <router-link to="/login">return to login page</router-link>
+        <router-link to="/login">Вертуться ко входу</router-link>
       </div>
     </template>
   </div>

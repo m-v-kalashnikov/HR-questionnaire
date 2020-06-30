@@ -6,6 +6,8 @@ import auth from './auth';
 import password from './password';
 import signup from './signup';
 import shops from './shops';
+import questionnaires from './questionnaires';
+import questions from './questions';
 import users from './users';
 
 const debug = process.env.NODE_ENV !== 'production';
@@ -18,6 +20,8 @@ export default new Vuex.Store({
     password,
     signup,
     shops,
+    questionnaires,
+    questions,
     users,
   },
   strict: debug,

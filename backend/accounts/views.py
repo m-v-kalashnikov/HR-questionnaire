@@ -1,8 +1,21 @@
-from django.shortcuts import render
 from rest_framework.decorators import api_view
 from django.http.response import JsonResponse
 from django.shortcuts import get_object_or_404
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.viewsets import ModelViewSet
 from .models import User
+from .permissions import AdminOrMeCanEdit
+from .serializers import UserSerializer
+
+
+class UserViewSet(ModelViewSet):
+    queryset = User.objects.all()
+    serializer_class = UserSerializer
+
+    permission_classes = (
+        IsAuthenticated,
+        AdminOrMeCanEdit,
+    )
 
 
 @api_view(('GET',))
