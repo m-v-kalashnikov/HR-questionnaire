@@ -44,7 +44,6 @@ class QuestionInQuestionnaireSerializer(serializers.HyperlinkedModelSerializer):
         read_only=True,
         slug_field='slug'
     )
-    # multi_correct =
 
     class Meta:
         model = QuestionInQuestionnaire

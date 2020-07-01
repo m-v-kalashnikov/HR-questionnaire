@@ -9,6 +9,7 @@ import shops from './shops';
 import questionnaires from './questionnaires';
 import questions from './questions';
 import users from './users';
+import answer from './answer';
 
 const debug = process.env.NODE_ENV !== 'production';
 
@@ -23,6 +24,7 @@ export default new Vuex.Store({
     questionnaires,
     questions,
     users,
+    answer,
   },
   strict: debug,
   plugins: debug ? [createLogger()] : [],

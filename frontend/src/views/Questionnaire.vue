@@ -81,6 +81,7 @@ export default {
   },
   computed: {
     ...mapState('questions', ['loading', 'error', 'data', 'errorMsg', 'UserAnswerArray']),
+    ...mapState('answer', ['responseData']),
   },
   mounted() {
     this.getQuestionnaire();
@@ -89,6 +90,10 @@ export default {
   methods: {
     ...mapActions('questions', [
       'clearData',
+    ]),
+    ...mapActions('answer', [
+      'sendUserAnswer',
+      'setUserAnswer',
     ]),
     getQuestionnaire() {
       questionnaires.getQuestionnaire(this.$route.params.slug)
@@ -140,7 +145,13 @@ export default {
         });
       }
       if (validated === true) {
-        console.log(this.UserAnswerArray);
+        this.UserAnswerArray.forEach((item) => {
+          this.$store.dispatch('answer/sendUserAnswer', item)
+            .then((resp) => {
+              this.$store.dispatch('answer/setUserAnswer', resp.data);
+            });
+        });
+        console.log(this.responseData);
       }
     },
   },
