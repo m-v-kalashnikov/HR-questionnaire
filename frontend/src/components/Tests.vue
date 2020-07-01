@@ -8,11 +8,9 @@
         v-model="UserAnswerArray[i].answer"
         :name="`radio-${i}`"
         required
-        :state="stateRadio"
         :value="answer.id">
         {{answer.title}}
       </b-form-radio>
-      <b-form-invalid-feedback :state="stateRadio">Выберите один из вариантов</b-form-invalid-feedback>
     </b-form-group>
     <b-form-group>
       <b-form-checkbox-group
@@ -49,9 +47,6 @@ export default {
   computed: {
     stateCheckbox() {
       return this.UserAnswerArray[this.i].answer.length > 1;
-    },
-    stateRadio() {
-      return Boolean(this.UserAnswerArray[this.i].answer);
     },
   },
 };

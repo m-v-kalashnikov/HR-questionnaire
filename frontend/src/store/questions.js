@@ -1,6 +1,7 @@
 import questionnaires from '../api/questionnaires';
 import { QUESTION_LOADING_START, QUESTION_SET_DATA, QUESTION_LOADING_SUCCESS, QUESTION_LOADING_FAILURE, DATA_CLEAR } from './types';
 import UserAnswer from '../models/userAnswer';
+import auth from '../api/auth';
 
 const initialState = {
   loading: false,
@@ -8,6 +9,7 @@ const initialState = {
   data: null,
   UserAnswerArray: null,
   errorMsg: '',
+  userId: -1,
 };
 
 const getters = {
@@ -36,6 +38,10 @@ const mutations = {
     state.loading = true;
     state.error = false;
     state.errorMsg = '';
+    auth.getAccountDetails()
+      .then((resp) => {
+        state.userId = resp.data.pk;
+      });
   },
   [QUESTION_LOADING_FAILURE](state, errorMsg = '') {
     state.loading = false;
@@ -50,7 +56,7 @@ const mutations = {
     state.data = data;
     state.UserAnswerArray = [];
     data.forEach((item) => {
-      state.UserAnswerArray.push(new UserAnswer('', item.id, '', ''));
+      state.UserAnswerArray.push(new UserAnswer(state.userId, item.id, [], ''));
     });
   },
   [DATA_CLEAR](state) {
