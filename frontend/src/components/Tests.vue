@@ -1,23 +1,40 @@
 <template>
   <div>
     <b-form-group>
-      <b-form-radio
-        v-if="!items.multi_correct"
-        v-for="(answer, a) in answers"
-        :key="a"
+<!--      <b-form-radio-->
+<!--        v-if="!items.multi_correct"-->
+<!--        v-for="(answer, a) in answers"-->
+<!--        :key="a"-->
+<!--        v-model="UserAnswerArray[i].answer"-->
+<!--        :name="`radio-${i}`"-->
+<!--        required-->
+<!--        :value="answer.id">-->
+<!--        {{answer.title}}-->
+<!--      </b-form-radio>-->
+      <b-form-checkbox-group
+        :name="`flavour-${i}`"
+        stacked
+        :state="stateCheckboxMono"
         v-model="UserAnswerArray[i].answer"
-        :name="`radio-${i}`"
-        required
-        :value="answer.id">
-        {{answer.title}}
-      </b-form-radio>
+        :id="`checkbox-mono-group-${i}`"
+        v-if="!items.multi_correct">
+        <b-form-checkbox
+          v-for="(answer, a) in answers"
+          :key="a"
+          :value="answer.id">
+          {{answer.title}}
+        </b-form-checkbox>
+        <b-form-invalid-feedback :state="stateCheckboxMono">
+          Выберите один вариант
+        </b-form-invalid-feedback>
+      </b-form-checkbox-group>
     </b-form-group>
     <b-form-group>
       <b-form-checkbox-group
         v-if="items.multi_correct"
-        :id="`checkbox-group-${i}`"
+        :id="`checkbox-multi-group-${i}`"
         v-model="UserAnswerArray[i].answer"
-        :state="stateCheckbox"
+        :state="stateCheckboxMulti"
         stacked
         :name="`flavour-${i}`">
         <b-form-checkbox
@@ -26,7 +43,9 @@
           :value="answer.id">
           {{answer.title}}
         </b-form-checkbox>
-        <b-form-invalid-feedback :state="stateCheckbox">Выберите несколько вариантов</b-form-invalid-feedback>
+        <b-form-invalid-feedback :state="stateCheckboxMulti">
+          Выберите несколько вариантов
+        </b-form-invalid-feedback>
       </b-form-checkbox-group>
     </b-form-group>
   </div>
@@ -43,10 +62,19 @@ export default {
   },
   mounted() {
     this.answers = this.items.question.answer;
+    this.UserAnswerArray[this.i].multi_correct_answer = this.isItMultiCorrect();
   },
   computed: {
-    stateCheckbox() {
+    stateCheckboxMulti() {
       return this.UserAnswerArray[this.i].answer.length > 1;
+    },
+    stateCheckboxMono() {
+      return this.UserAnswerArray[this.i].answer.length === 1;
+    },
+  },
+  methods: {
+    isItMultiCorrect() {
+      return this.items.multi_correct === true;
     },
   },
 };

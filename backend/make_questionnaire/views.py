@@ -46,5 +46,7 @@ class QuestionViewSet(viewsets.ModelViewSet):
 class UserAnswerViewSet(viewsets.ModelViewSet):
     queryset = UserAnswer.objects.all()
     serializer_class = UserAnswerSerializer
+    filter_backends = (filters.DjangoFilterBackend,)
+    filterset_fields = ('question_in_questionnaire__questionnaire__slug', 'user_profile')
     # TODO: 1) only admin/manager can make changes 2) only authenticated
 

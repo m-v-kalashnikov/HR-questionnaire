@@ -60,4 +60,4 @@ class UserAnswerSerializer(serializers.HyperlinkedModelSerializer):
 
     class Meta:
         model = UserAnswer
-        fields = ['url', 'id', 'user_profile', 'string_answer', 'question_in_questionnaire', 'answer']
+        fields = ['url', 'id', 'user_profile', 'string_answer', 'question_in_questionnaire', 'answer', 'questionnaire_slug']
