@@ -56,7 +56,7 @@ const mutations = {
     state.data = data;
     state.UserAnswerArray = [];
     data.forEach((item) => {
-      state.UserAnswerArray.push(new UserAnswer(state.userId, item.id, [], ''));
+      state.UserAnswerArray.push(new UserAnswer(state.userId, item.id, [], '', null));
     });
   },
   [DATA_CLEAR](state) {

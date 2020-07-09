@@ -10,5 +10,19 @@ export default {
 
     });
   },
-
+  getAllUserAnswers(data) {
+    const parameters = new URLSearchParams();
+    parameters.append('question_in_questionnaire__questionnaire__slug', data.questionnaire);
+    parameters.append('user_profile', data.user);
+    return session.get('/api/user-answer/', {
+      params: parameters,
+    });
+  },
+  getCorrectAnswers(slug) {
+    return session.get('/api/question-in-questionnaire-with-correct/', {
+      params: {
+        questionnaire__slug: slug,
+      },
+    });
+  },
 };

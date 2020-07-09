@@ -35,3 +35,6 @@ class UserAnswer(models.Model):
             user=user,
             question_in_questionnaire=question_in_questionnaire
         )
+
+    def questionnaire_slug(self):
+        return self.question_in_questionnaire.questionnaire.slug

@@ -62,4 +62,10 @@ export default {
 .bg-vue-dark {
   background: #2c3e50 !important;
 }
+.bg-vue-lightdark {
+  background: rgba(44, 62, 80, 0.85) !important;
+}
+.bg-vue-lighterdark {
+  background: rgba(44, 62, 80, 0.30) !important;
+}
 </style>

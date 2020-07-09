@@ -24,11 +24,32 @@ class AnswerSerializer(serializers.HyperlinkedModelSerializer):
         fields = ['url', 'id', 'title']
 
 
+class AnswerWithCorrectSerializer(serializers.HyperlinkedModelSerializer):
+    url = serializers.HyperlinkedIdentityField(
+        view_name='make_questionnaire_app:answer_with_correct-detail',
+    )
+
+    class Meta:
+        model = Answer
+        fields = ['url', 'id', 'title', 'correct']
+
+
 class QuestionSerializer(serializers.HyperlinkedModelSerializer):
     url = serializers.HyperlinkedIdentityField(
         view_name='make_questionnaire_app:question-detail',
     )
     answer = AnswerSerializer(many=True, allow_null=True)
+
+    class Meta:
+        model = Question
+        fields = ['url', 'id', 'title', 'image', 'answer']
+
+
+class QuestionWithCorrectSerializer(serializers.HyperlinkedModelSerializer):
+    url = serializers.HyperlinkedIdentityField(
+        view_name='make_questionnaire_app:question_with_correct-detail',
+    )
+    answer = AnswerWithCorrectSerializer(many=True, allow_null=True)
 
     class Meta:
         model = Question
@@ -50,6 +71,21 @@ class QuestionInQuestionnaireSerializer(serializers.HyperlinkedModelSerializer):
         fields = ['url', 'id', 'question', 'questionnaire', 'value', 'multi_correct']
 
 
+class QuestionInQuestionnaireWithCorrectSerializer(serializers.HyperlinkedModelSerializer):
+    url = serializers.HyperlinkedIdentityField(
+        view_name='make_questionnaire_app:question_in_questionnaire_with_correct-detail',
+    )
+    question = QuestionWithCorrectSerializer(read_only=True)
+    questionnaire = serializers.SlugRelatedField(
+        read_only=True,
+        slug_field='slug'
+    )
+
+    class Meta:
+        model = QuestionInQuestionnaire
+        fields = ['url', 'id', 'question', 'questionnaire', 'value', 'multi_correct']
+
+
 class UserAnswerSerializer(serializers.HyperlinkedModelSerializer):
     url = serializers.HyperlinkedIdentityField(
         view_name='make_questionnaire_app:user_answer-detail',
@@ -60,4 +96,4 @@ class UserAnswerSerializer(serializers.HyperlinkedModelSerializer):
 
     class Meta:
         model = UserAnswer
-        fields = ['url', 'id', 'user_profile', 'string_answer', 'question_in_questionnaire', 'answer']
+        fields = ['url', 'id', 'user_profile', 'string_answer', 'question_in_questionnaire', 'answer', 'questionnaire_slug']
