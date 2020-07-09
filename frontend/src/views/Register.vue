@@ -90,6 +90,7 @@
 import { mapActions, mapState } from 'vuex';
 
 export default {
+  title: 'Регистрация | anyQuestions?',
   data() {
     return {
       form: {

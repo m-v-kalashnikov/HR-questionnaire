@@ -14,21 +14,26 @@ export default {
     return session.post('/auth/password/change/', { password1, password2 });
   },
   sendAccountPasswordResetEmail(email) {
-    return session.post('/auth/password/reset/', { email });
+    return session.post('/api/auth/password/reset/', { email });
   },
   resetAccountPassword(uid, token, new_password1, new_password2) { // eslint-disable-line camelcase
-    return session.post('/auth/password/reset/confirm/', { uid, token, new_password1, new_password2 });
+    return session.post('/api/auth/password/reset/confirm/', { uid, token, new_password1, new_password2 });
   },
   getAccountDetails() {
-    return session.get('/auth/user/');
+    return session.get('/api/auth/user/');
   },
   updateAccountDetails(data) {
-    return session.patch('/auth/user/', data);
+    return session.patch('/api/auth/user/', data);
   },
   verifyAccountEmail(key) {
-    return session.post('/registration/verify-email/', { key });
+    return session.post('/api/registration/verify-email/', { key });
   },
   getFullUserInfo() {
     return session.get('/api/current_user_info');
+  },
+  askForBecomingAManager(id) {
+    return session.patch(`/api/users/${id}/`, {
+      want_to_be_manager: true,
+    });
   },
 };

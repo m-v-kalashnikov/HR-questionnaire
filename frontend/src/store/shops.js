@@ -1,3 +1,5 @@
+// TODO: Delete this file
+
 import shops from '../api/shops';
 import { LOADING_START, SET_DATA, LOADING_SUCCESS, LOADING_FAILURE } from './types';
 

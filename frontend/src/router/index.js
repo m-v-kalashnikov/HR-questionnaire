@@ -2,6 +2,7 @@ import Vue from 'vue';
 import Router from 'vue-router';
 
 import Users from '../views/Users';
+import Questionnaire from '../views/Questionnaire';
 import Profile from '../views/Profile';
 import Home from '../views/Home';
 import Login from '../views/Login';
@@ -63,9 +64,10 @@ export default new Router({
       redirect: '/home',
     },
     {
-      path: '/users',
-      component: Users,
-      beforeEnter: requireAdminAndAuthenticated,
+      path: '/questionnaire/:slug',
+      name: 'Questionnaire',
+      component: Questionnaire,
+      beforeEnter: requireAuthenticated,
     },
     {
       path: '/profile',
