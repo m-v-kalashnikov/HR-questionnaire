@@ -8,6 +8,10 @@ import {
   GET_USER_ANSWER_SUCCESS,
   GET_USER_ANSWER_FAILURE,
   GET_USER_ANSWER_RESPONSE,
+  GET_CORRECT_ANSWER_START,
+  GET_CORRECT_ANSWER_SUCCESS,
+  GET_CORRECT_ANSWER_FAILURE,
+  GET_CORRECT_ANSWER_RESPONSE,
 } from './types';
 import auth from '../api/auth';
 
@@ -17,6 +21,9 @@ const initialState = {
   responseData: [],
   currentUserAnswers: null,
   data: null,
+  correctAnswerLoading: false,
+  correctAnswerError: false,
+  correctAnswerData: null,
 };
 
 const actions = {
@@ -48,6 +55,15 @@ const actions = {
         .catch(() => commit(GET_USER_ANSWER_FAILURE));
     });
   },
+  getCorrectAnswers({ commit }, slug) {
+    commit(GET_CORRECT_ANSWER_START);
+    userAnswer.getCorrectAnswers(slug)
+      .then((resp) => {
+        commit(GET_CORRECT_ANSWER_SUCCESS);
+        commit(GET_CORRECT_ANSWER_RESPONSE, resp);
+      })
+      .catch(() => commit(GET_CORRECT_ANSWER_FAILURE));
+  },
 };
 
 const mutations = {
@@ -71,6 +87,7 @@ const mutations = {
     state.loading = true;
     state.error = false;
     state.currentUserAnswers = null;
+    state.correctAnswerData = null;
   },
   [GET_USER_ANSWER_SUCCESS](state) {
     state.loading = false;
@@ -82,6 +99,22 @@ const mutations = {
   },
   [GET_USER_ANSWER_RESPONSE](state, responseData) {
     state.currentUserAnswers = responseData.data;
+  },
+  [GET_CORRECT_ANSWER_START](state) {
+    state.correctAnswerLoading = true;
+    state.correctAnswerError = false;
+    state.correctAnswerData = null;
+  },
+  [GET_CORRECT_ANSWER_SUCCESS](state) {
+    state.correctAnswerLoading = false;
+    state.correctAnswerError = false;
+  },
+  [GET_CORRECT_ANSWER_FAILURE](state) {
+    state.correctAnswerLoading = false;
+    state.correctAnswerError = true;
+  },
+  [GET_CORRECT_ANSWER_RESPONSE](state, responseData) {
+    state.correctAnswerData = responseData.data;
   },
 };
 

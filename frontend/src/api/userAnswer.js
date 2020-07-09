@@ -18,4 +18,11 @@ export default {
       params: parameters,
     });
   },
+  getCorrectAnswers(slug) {
+    return session.get('/api/question-in-questionnaire-with-correct/', {
+      params: {
+        questionnaire__slug: slug,
+      },
+    });
+  },
 };

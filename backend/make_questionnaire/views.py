@@ -3,7 +3,8 @@ from rest_framework import viewsets
 from django_filters import rest_framework as filters
 from .models import Questionnaire, QuestionInQuestionnaire, UserAnswer, Question, Answer
 from .serializers import QuestionnaireSerializer, QuestionInQuestionnaireSerializer, UserAnswerSerializer, \
-    QuestionSerializer, AnswerSerializer
+    QuestionSerializer, AnswerSerializer, QuestionInQuestionnaireWithCorrectSerializer, QuestionWithCorrectSerializer, \
+    AnswerWithCorrectSerializer
 
 
 class QuestionnaireViewSet(viewsets.ModelViewSet):
@@ -19,12 +20,31 @@ class AnswerViewSet(viewsets.ModelViewSet):
     # TODO: 1) only admin/manager can make changes 2) only authenticated
 
 
+class AnswerWithCorrectViewSet(viewsets.ModelViewSet):
+    queryset = Answer.objects.all()
+    serializer_class = AnswerWithCorrectSerializer
+    # TODO: 1) only admin/manager can make changes 2) only authenticated
+
+
 class QuestionInQuestionnaireViewSet(viewsets.ModelViewSet):
     queryset = QuestionInQuestionnaire.objects.all()
     serializer_class = QuestionInQuestionnaireSerializer
     filter_backends = (filters.DjangoFilterBackend,)
     filterset_fields = ('questionnaire__slug',)
     # TODO: 1) only authenticated
+
+
+class QuestionInQuestionnaireWithCorrectViewSet(viewsets.ModelViewSet):
+    queryset = QuestionInQuestionnaire.objects.all()
+    serializer_class = QuestionInQuestionnaireWithCorrectSerializer
+    filter_backends = (filters.DjangoFilterBackend,)
+    filterset_fields = ('questionnaire__slug',)
+    # TODO: 1) only authenticated
+
+
+class QuestionWithCorrectViewSet(viewsets.ModelViewSet):
+    queryset = Question.objects.all()
+    serializer_class = QuestionWithCorrectSerializer
 
 
 class QuestionViewSet(viewsets.ModelViewSet):

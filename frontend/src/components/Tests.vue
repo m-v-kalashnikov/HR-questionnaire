@@ -1,16 +1,6 @@
 <template>
   <div>
     <b-form-group>
-<!--      <b-form-radio-->
-<!--        v-if="!items.multi_correct"-->
-<!--        v-for="(answer, a) in answers"-->
-<!--        :key="a"-->
-<!--        v-model="UserAnswerArray[i].answer"-->
-<!--        :name="`radio-${i}`"-->
-<!--        required-->
-<!--        :value="answer.id">-->
-<!--        {{answer.title}}-->
-<!--      </b-form-radio>-->
       <b-form-checkbox-group
         :name="`flavour-${i}`"
         stacked
