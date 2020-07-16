@@ -8,6 +8,7 @@ from make_questionnaire.models import Answer
 def user_directory_path(filename):
     return 'question/{filename}/'.format(filename=filename)
 
+
 class Question(models.Model):
     title = HTMLField('Описание', null=True, blank=True)
     image = models.ImageField('Изображение',

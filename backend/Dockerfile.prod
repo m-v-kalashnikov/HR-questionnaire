@@ -50,11 +50,12 @@ RUN mkdir $APP_HOME/mediafiles
 WORKDIR $APP_HOME
 
 # install dependencies
-RUN apk update && apk add libpq
+RUN apk update && apk add libpq libjpeg postgresql-dev gcc python3-dev musl-dev jpeg-dev zlib-dev
 COPY --from=builder /code/wheels /wheels
 COPY --from=builder /code/requirements.txt .
 RUN pip install --upgrade pip
 RUN pip install --no-cache /wheels/*
+RUN pip install --upgrade Pillow
 
 # copy entrypoint-prod.sh
 COPY ./backend/scripts/start_prod.sh /
