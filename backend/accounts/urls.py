@@ -1,8 +1,14 @@
-from django.urls import path, re_path
-from rest_framework_jwt.views import obtain_jwt_token, refresh_jwt_token, verify_jwt_token
+from django.urls import re_path, include
+from rest_framework.routers import DefaultRouter
+from .views import user_info, UserViewSet
 
-urlpatterns = [
-    re_path(r'^auth/obtain_token/', obtain_jwt_token, name='api-jwt-auth'),
-    re_path(r'^auth/refresh_token/', refresh_jwt_token, name='api-jwt-refresh'),
-    re_path(r'^auth/verify_token/', verify_jwt_token, name='api-jwt-verify'),
+router = DefaultRouter()
+router.register(r'users', UserViewSet)
+
+urlpatterns = router.urls
+
+urlpatterns += [
+    re_path(r'^current_user_info/', user_info),
+    re_path(r'^auth/', include('rest_auth.urls')),
+    re_path(r'^registration/', include('rest_auth.registration.urls')),
 ]

@@ -21,7 +21,7 @@ from django.contrib import admin
 from django.urls import path, include
 
 urlpatterns = [
-    path('', include('accounts.urls')),
+    path('api/', include('accounts.urls')),
     path('api/{}/'.format(os.getenv('ADMIN_PANEL_URL')), admin.site.urls),
     path('api/', include('make_questionnaire.urls', namespace="make_questionnaire_app")),
 ]

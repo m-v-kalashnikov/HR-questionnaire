@@ -1,9 +1,13 @@
-Django==3.0.6
+Django==3.0.7
 psycopg2-binary==2.8.5
 djangorestframework==3.11.0
 markdown==3.2.2
 django-filter==2.2.0
-djangorestframework-jwt==1.11.0
 googletrans==2.4.0
 gunicorn==20.0.4
 django-cors-headers==3.3.0
+django-rest-auth==0.9.5
+django-allauth==0.42.0
+Pillow==7.1.2
+django-tinymce==3.0.2
+django-mailgun==0.9.1

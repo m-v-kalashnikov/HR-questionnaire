@@ -1,0 +1,9 @@
+{% load account %}{% user_display user as user_display %}{% load i18n %}{% autoescape off %}{% blocktrans with site_name=current_site.name site_domain=current_site.domain %}Привет от {{ site_name }}!
+
+Вы получили это письмо так как пользователь {{ user_display }} указал ваш email до время регистрации.
+
+Для подтверждения, перейдите по ссылке: {% endblocktrans %}{% if request.is_secure %}https{% else %}http{% endif %}{% blocktrans with domain=current_site.domain %}://{{ domain }}/#/register/{{ key }}
+{% endblocktrans %}
+{% blocktrans with site_name=current_site.name site_domain=current_site.domain %}Искренне ваша, команда {{ site_name }}!
+{{ site_domain }}{% endblocktrans %}
+{% endautoescape %}
