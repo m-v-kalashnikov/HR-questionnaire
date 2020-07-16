@@ -5,11 +5,11 @@ import createLogger from 'vuex/dist/logger';
 import auth from './auth';
 import password from './password';
 import signup from './signup';
-import shops from './shops';
 import questionnaires from './questionnaires';
 import questions from './questions';
 import users from './users';
 import answer from './answer';
+import statistics from './statistics';
 
 const debug = process.env.NODE_ENV !== 'production';
 
@@ -20,11 +20,11 @@ export default new Vuex.Store({
     auth,
     password,
     signup,
-    shops,
     questionnaires,
     questions,
     users,
     answer,
+    statistics,
   },
   strict: debug,
   plugins: debug ? [createLogger()] : [],

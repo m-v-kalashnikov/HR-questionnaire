@@ -11,6 +11,7 @@ import PasswordReset from '../views/PasswordReset';
 import PasswordResetConfirm from '../views/PasswordResetConfirm';
 import Register from '../views/Register';
 import VerifyEmail from '../views/VerifyEmail';
+import Statistics from '../views/Statistics';
 
 import store from '../store';
 
@@ -72,6 +73,11 @@ export default new Router({
     {
       path: '/profile',
       component: Profile,
+      beforeEnter: requireAuthenticated,
+    },
+    {
+      path: '/statistics',
+      component: Statistics,
       beforeEnter: requireAuthenticated,
     },
     {

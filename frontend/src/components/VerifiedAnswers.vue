@@ -35,15 +35,6 @@
         </b-card>
       </b-col>
     </b-row>
-    <b-row v-if="this.correctAnswerData && this.currentUserAnswers">
-      <b-col>
-        <b-card class="mt-3 bg-vue-lightdark shadow-lg" text-variant="white">
-          <b-card-text>
-            <h4>Итого балов набрано за тест: {{totalScoredValue(this.correctAnswerData, this.currentUserAnswers)}}</h4>
-          </b-card-text>
-        </b-card>
-      </b-col>
-    </b-row>
   </div>
 </template>
 
@@ -54,41 +45,23 @@ export default {
   methods: {
     scoredValue(item, i) {
       const correct = [];
+      let points = 0;
       let correctValue = 0;
       item.question.answer.forEach((answer) => {
         if (answer.correct) {
+          correctValue += 1;
           correct.push(answer.id);
         }
       });
+      const cof = item.value / correctValue;
+
       this.currentUserAnswers[i].answer.forEach((answer) => {
         if (correct.includes(answer)) {
-          correctValue += 1;
+          points += cof;
         }
       });
-      return correctValue;
-    },
-    totalScoredValue(correctAnswerData, currentUserAnswers) {
-      const correctAnswers = [];
-      const userAnswers = [];
-      let totalCorrectValue = 0;
-      correctAnswerData.forEach((item) => {
-        item.question.answer.forEach((answer) => {
-          if (answer.correct === true) {
-            correctAnswers.push(answer.id);
-          }
-        });
-      });
-      currentUserAnswers.forEach((item) => {
-        item.answer.forEach((answer) => {
-          userAnswers.push(answer);
-        });
-      });
-      userAnswers.forEach((answer) => {
-        if (correctAnswers.includes(answer) === true) {
-          totalCorrectValue += 1;
-        }
-      });
-      return totalCorrectValue;
+
+      return points;
     },
   },
 };

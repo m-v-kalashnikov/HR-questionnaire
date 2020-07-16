@@ -56,8 +56,9 @@ INSTALLED_APPS = [
 
 SITE_ID = 1
 
-# TODO: set real email backend
-EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+MAIL_BACKEND = 'django_mailgun.MailgunBackend'
+MAILGUN_ACCESS_KEY = os.environ.get("ACCESS_KEY")
+MAILGUN_SERVER_NAME = os.environ.get("SERVER_NAME")
 
 MIDDLEWARE = [
     'corsheaders.middleware.CorsMiddleware',

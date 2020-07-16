@@ -10,8 +10,7 @@
         <b-collapse id="nav-collapse" is-nav>
           <!-- Right aligned nav items -->
           <b-navbar-nav class="ml-auto">
-            <!-- TODO: change to admin questionnaire creation -->
-            <b-nav-item to="/users" class="mr-5" v-if="isSuperUser">Users</b-nav-item>
+            <b-nav-item to="/statistics" class="mr-5">Статистика</b-nav-item>
             <b-nav-item-dropdown right>
               <!-- Using 'button-content' slot -->
               <template v-slot:button-content>

@@ -1,6 +1,7 @@
 from rest_framework import serializers
 from .models import Questionnaire, QuestionInQuestionnaire, Question, Answer, UserAnswer
 from accounts.models import User
+from accounts.serializers import PublicUserSerializer
 
 
 class QuestionnaireSerializer(serializers.HyperlinkedModelSerializer):
@@ -11,7 +12,8 @@ class QuestionnaireSerializer(serializers.HyperlinkedModelSerializer):
 
     class Meta:
         model = Questionnaire
-        fields = ['url', 'title', 'questionnaire_type', 'when_to_start', 'description', 'slug']
+        fields = ['url', 'title', 'questionnaire_type',
+                  'when_to_start', 'description', 'slug']
 
 
 class AnswerSerializer(serializers.HyperlinkedModelSerializer):
@@ -68,7 +70,8 @@ class QuestionInQuestionnaireSerializer(serializers.HyperlinkedModelSerializer):
 
     class Meta:
         model = QuestionInQuestionnaire
-        fields = ['url', 'id', 'question', 'questionnaire', 'value', 'multi_correct']
+        fields = ['url', 'id', 'question',
+                  'questionnaire', 'value', 'multi_correct']
 
 
 class QuestionInQuestionnaireWithCorrectSerializer(serializers.HyperlinkedModelSerializer):
@@ -83,17 +86,44 @@ class QuestionInQuestionnaireWithCorrectSerializer(serializers.HyperlinkedModelS
 
     class Meta:
         model = QuestionInQuestionnaire
-        fields = ['url', 'id', 'question', 'questionnaire', 'value', 'multi_correct']
+        fields = ['url', 'id', 'question',
+                  'questionnaire', 'value', 'multi_correct']
 
 
 class UserAnswerSerializer(serializers.HyperlinkedModelSerializer):
     url = serializers.HyperlinkedIdentityField(
         view_name='make_questionnaire_app:user_answer-detail',
     )
-    question_in_questionnaire = serializers.PrimaryKeyRelatedField(queryset=QuestionInQuestionnaire.objects.all())
-    answer = serializers.PrimaryKeyRelatedField(many=True, queryset=Answer.objects.all())
-    user_profile = serializers.PrimaryKeyRelatedField(queryset=User.objects.all())
+    question_in_questionnaire = serializers.PrimaryKeyRelatedField(
+        queryset=QuestionInQuestionnaire.objects.all())
+    answer = serializers.PrimaryKeyRelatedField(
+        many=True, queryset=Answer.objects.all())
+    user_profile = serializers.PrimaryKeyRelatedField(
+        queryset=User.objects.all())
 
     class Meta:
         model = UserAnswer
-        fields = ['url', 'id', 'user_profile', 'string_answer', 'question_in_questionnaire', 'answer', 'questionnaire_slug']
+        fields = ['url', 'id', 'user_profile', 'string_answer',
+                  'question_in_questionnaire', 'answer', 'questionnaire_slug']
+
+
+class StatisticsUserAnswerSerializer(serializers.ModelSerializer):
+    question_in_questionnaire = QuestionInQuestionnaireWithCorrectSerializer(
+        read_only=True)
+    answer = serializers.PrimaryKeyRelatedField(
+        many=True, queryset=Answer.objects.all())
+
+    class Meta:
+        model = UserAnswer
+        fields = ['id', 'string_answer',
+                  'question_in_questionnaire', 'answer']
+
+
+class StatisticsUserSerializer(serializers.ModelSerializer):
+
+    user_answer = StatisticsUserAnswerSerializer(read_only=True, many=True)
+
+    class Meta:
+        model = User
+        fields = ['id', 'username', 'first_name',
+                  'last_name', 'email', 'user_answer']

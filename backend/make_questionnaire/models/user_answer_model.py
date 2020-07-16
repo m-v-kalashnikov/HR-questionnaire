@@ -1,13 +1,14 @@
 from django.db import models
 from accounts.models import User
+from ..models import Answer
 
 
 class UserAnswer(models.Model):
-    user_profile = models.ForeignKey(User,
-                             related_name='user_answer',
-                             on_delete=models.SET_NULL,
-                             null=True
-                             )
+    user_profile = models.ForeignKey(
+        User,
+        related_name='user_answer',
+        on_delete=models.SET_NULL,
+        null=True)
     question_in_questionnaire = models.ForeignKey('QuestionInQuestionnaire',
                                                   related_name='user_answer',
                                                   on_delete=models.SET_NULL,
