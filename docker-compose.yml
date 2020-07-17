@@ -1,5 +1,4 @@
 version: '3'
-
 services:
   db:
     container_name: db-prod
@@ -8,7 +7,6 @@ services:
       - ./.env.prod.db
     networks:
       - django-nginx
-
   web:
     container_name: web-prod
     build:
@@ -27,14 +25,13 @@ services:
       - db
     networks:
       - django-nginx
-
   nginx:
     container_name: nginx-prod
     build:
       context: .
       dockerfile: nginx/Dockerfile
     ports:
-      - 800:80
+      - 80:80
     depends_on:
       - web
     volumes:
@@ -43,11 +40,9 @@ services:
     - django-media:/home/app/web/mediafiles
     networks:
       - django-nginx
-
 volumes:
   django-static:
   django-media:
-
 networks:
   django-nginx:
     driver: bridge
